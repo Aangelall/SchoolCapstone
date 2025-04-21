@@ -1,0 +1,169 @@
+<?php
+
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\UserController;
+use Illuminate\Support\Facades\Auth;
+use App\Http\Controllers\SectionSubjectController;
+use App\Http\Controllers\MasterListController;
+use App\Http\Controllers\StudentController;
+use App\Http\Controllers\AdvisoryClassController;
+use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\AchieverController;
+use App\Http\Controllers\SectionController;
+use App\Http\Controllers\StrandController;
+use App\Http\Controllers\ClassController;
+use App\Http\Controllers\StudentAccessController;
+
+Route::middleware(['auth', 'verified'])->get('/user-dashboard', function () {
+    if (Auth::user()->role === 'admin') {
+        return redirect()->route('dashboard')->with('error', 'Admins cannot access the User Dashboard.');
+    }
+
+    if (Auth::user()->role === 'student') {
+        return view('student.dashboard');
+    }
+
+    return view('teacher.dashboard');
+})->name('user.dashboard');
+
+Route::middleware(['auth', 'verified'])->get('/dashboard', function () {
+    if (Auth::user()->role !== 'admin') {
+        return redirect()->route('user.dashboard')->with('error', 'Access denied. Redirected to User Dashboard.');
+    }
+    return view('admin.dashboard');
+})->name('dashboard');
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/user-management', function() {
+        return redirect()->route('add.teacher');
+    })->name('user.management');
+    Route::post('/advisory-class/confirm-grades', [AdvisoryClassController::class, 'confirmGrades'])
+    ->name('advisory-class.confirm-grades');
+    Route::get('/student/grades', [StudentController::class, 'showGrades'])->name('student.grades');
+    Route::get('/filtered-classes', [SectionSubjectController::class, 'getFilteredClasses'])->name('filtered.classes');
+    Route::post('/assign-teacher-to-class', [SectionSubjectController::class, 'assignTeacherToClass'])->name('assign.teacher.to.class');
+    Route::get('/available-teachers', [SectionSubjectController::class, 'getAvailableTeachers'])->name('available.teachers');
+    Route::get('/filtered-students', [MasterListController::class, 'getFilteredStudents'])->name('filtered.students');
+    Route::get('/add-teacher', [UserController::class, 'showTeachers'])->name('add.teacher');
+    Route::get('/add-student', [UserController::class, 'showStudents'])->name('add.student');
+
+    Route::post('/users', [UserController::class, 'store'])->name('users.store');
+    Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+    Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+    Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+
+    // CSV Import/Export Routes
+    Route::post('/export-teachers', [UserController::class, 'exportSelectedTeachersToCSV'])->name('export.teachers');
+    Route::post('/export-students', [StudentController::class, 'exportSelectedToCSV'])->name('export.students');
+    Route::post('/import-teachers', [UserController::class, 'importTeachers'])->name('import.teachers');
+    Route::post('/import-students', [UserController::class, 'importStudents'])->name('import.students');
+    Route::get('/available-students', [SectionSubjectController::class, 'getAvailableStudents'])->name('available.students');
+    Route::get('/section-subject', [SectionSubjectController::class, 'index'])->name('section.subject');
+    Route::delete('/students/{user}', [StudentController::class, 'destroy'])->name('students.destroy'); //jhgfdsdefrtgyhuj
+    Route::post('/addclassjunior', [SectionSubjectController::class, 'storeJuniorClass'])->name('store.junior.class');
+    Route::post('/addclasssenior', [SectionSubjectController::class, 'storeSeniorClass'])->name('store.senior.class');
+    Route::get('/class/{id}', [SectionSubjectController::class, 'getClassDetails'])->name('class.details');
+    Route::get('/addclassjunior', [SectionSubjectController::class, 'addClassJunior'])->name('addclassjunior');
+    Route::get('/addclasssenior', [SectionSubjectController::class, 'addClassSenior'])->name('addclasssenior');
+    Route::get('/check-adviser-availability/{teacherId}', [SectionSubjectController::class, 'checkAdviserAvailability']);
+    Route::get('/sections-by-strand', [SectionSubjectController::class, 'getSectionsByStrand']);
+    Route::get('/strands-by-grade', [SectionSubjectController::class, 'getStrandsByGradeLevel']);
+    Route::get('/sections/with-classes', [SectionSubjectController::class, 'getSectionsWithClasses']);
+    Route::get('/check-section-used', [SectionSubjectController::class, 'checkSectionUsed']);
+
+    Route::get('/master-list', [MasterListController::class, 'index'])->name('master.list');
+    Route::get('/student/{student}/grades', [MasterListController::class, 'getStudentGrades'])->name('student.grades.api');
+
+    // Advisory Class Routes
+    Route::get('/advisory-class', [AdvisoryClassController::class, 'index'])->name('advisory.class');
+    Route::get('/advisory-class/student-grades/{student}', [AdvisoryClassController::class, 'getStudentGrades'])
+         ->name('advisory.student.grades');
+    Route::get('/advisory-class/info', [AdvisoryClassController::class, 'getClassInfo'])
+         ->name('advisory.class.info');
+    Route::get('/advisory-class/achievers', [AdvisoryClassController::class, 'getAchievers'])
+         ->name('advisory.class.achievers');
+    Route::get('/achievers', [AchieverController::class, 'index'])->name('achievers');
+    Route::get('/achievers/by-year', [AchieverController::class, 'getAchieversByYear'])->name('achievers.by.year');
+    Route::get('/advisory-class/subject-grade-status', [AdvisoryClassController::class, 'getSubjectGradeStatus'])
+         ->name('advisory-class.subject-grade-status');
+    Route::get('/advisory-class/check-submission-status', [AdvisoryClassController::class, 'checkSubmissionStatus'])
+         ->name('advisory-class.check-submission-status');
+         Route::post('/promote-students', [SectionSubjectController::class, 'promoteStudents'])
+         ->name('promote.students');
+    // Subject and Grading Routes
+    Route::get('/subjects', [SubjectController::class, 'index'])->name('subjects');
+    Route::get('/subjects/by-year', [SubjectController::class, 'getSubjects'])->name('subjects.by.year');
+    Route::get('/subjects/{subject}/students', [SubjectController::class, 'getStudentsForSubject'])->name('subjects.students');
+    Route::post('/subjects/update-grades', [SubjectController::class, 'updateGrades'])->name('subjects.update.grades');
+
+    // Sections
+    Route::get('sections', [SectionController::class, 'index']);
+    Route::get('sections/by-grade/{grade_level}', [SectionController::class, 'getByGradeLevel']);
+    Route::post('sections', [SectionController::class, 'store']);
+    Route::put('sections/{section}', [SectionController::class, 'update']);
+    Route::delete('sections/{section}', [SectionController::class, 'destroy']);
+
+    // Strands
+    Route::get('strands-sections', [StrandController::class, 'index']);
+    Route::post('strands', [StrandController::class, 'store']);
+    Route::delete('strands/{strand}', [StrandController::class, 'destroy']);
+    Route::post('sections-with-strand', [StrandController::class, 'storeSection']);
+    Route::put('sections-with-strand/{section}', [StrandController::class, 'updateSection'])->where('section', '[0-9]+');
+    Route::delete('sections-with-strand/{section}', [StrandController::class, 'destroySection'])->where('section', '[0-9]+');
+    Route::get('/sections-by-strand', [SectionSubjectController::class, 'getSectionsByStrand']);
+    // routes/web.php
+    Route::get('/subjects-by-group', [SubjectController::class, 'getByGroup']);
+
+    Route::post('/add-student-to-class', [ClassController::class, 'addStudentToClass'])->name('add.student.to.class');
+
+
+    Route::get('/subject-groups/subjects', function(Request $request) {
+        $validated = $request->validate([
+            'grade' => 'required|numeric',
+            'strand' => 'required|string', 
+            'semester' => 'required|numeric'
+        ]);
+    
+        $subjects = \App\Models\Subject::whereHas('group', function($query) use ($validated) {
+            $query->where('grade_level', $validated['grade'])
+                  ->where('strand', $validated['strand'])
+                  ->where('semester', $validated['semester']);
+        })->get();
+    
+        return response()->json($subjects);
+    });
+
+    // Student Access Control Routes
+    Route::get('/student-access/status', [StudentAccessController::class, 'status'])
+        ->name('student-access.status');
+    Route::post('/student-access/toggle', [StudentAccessController::class, 'toggleAll'])
+        ->name('student-access.toggle');
+});
+
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/additem', function () {
+        return view('additem');
+    })->name('additem');
+});
+
+Route::get('/', function () {
+    return view('auth.login');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware(['auth'])->group(function () {
+    // Student CSV upload routes
+    Route::get('/check-student-lrn/{lrn}', [StudentController::class, 'checkLRN'])->name('check.student.lrn');
+    Route::post('/process-student-csv', [StudentController::class, 'processStudentCSV'])->name('process.student.csv');
+    Route::post('/check-duplicate-lrns', [StudentController::class, 'checkDuplicateLRNs'])->name('check.duplicate.lrns');
+});
+
+Route::post('/save-subject-to-group', [SubjectController::class, 'saveToGroup']);
+
+require __DIR__.'/auth.php';
