@@ -14,6 +14,7 @@ use App\Http\Controllers\SectionController;
 use App\Http\Controllers\StrandController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\StudentAccessController;
+use Illuminate\Http\Request;
 
 Route::middleware(['auth', 'verified'])->get('/user-dashboard', function () {
     if (Auth::user()->role === 'admin') {
