@@ -25,7 +25,7 @@ IMPORTANT MANUAL CHANGES NEEDED:
                 <input type="text" class="search-input" placeholder="Search...">
             </div>
         </div>
-
+        <!-- newly updated -->
         <!-- Level Selection Header -->
         <div class="level-selection-container">
             <h1>Master List</h1>
