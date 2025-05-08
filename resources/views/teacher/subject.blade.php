@@ -25,14 +25,16 @@
                     <div class="table-header">
                         <div class="table-header-left">
                             <h2>Student Grades</h2>
-                            <div id="adviser-info" class="text-sm mt-2 text-gray-700 font-medium"></div>
+                            <div id="subject-name" class="text-sm mt-2 text-gray-700 font-medium"></div>
+                            <div id="year-level" class="text-sm mt-1 text-gray-700 font-medium"></div>
+                            <div id="adviser-info" class="text-sm mt-1 text-gray-700 font-medium"></div>
                             <div id="semester-info" class="text-sm mt-1 text-gray-600"></div>
                         </div>
                         <div class="table-header-right">
                             <!-- Period selector -->
                             <div class="period-selector">
                                 <label for="period-select">Select Period:</label>
-                                <select id="period-select" class="form-select" onchange="updatePeriodDisplay()">
+                                <select id="period-select" class="form-select">
                                     <!-- Options will be populated dynamically -->
                                 </select>
                             </div>
@@ -348,16 +350,20 @@
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background-color 0.2s;
+    transition: all 0.2s ease;
 }
 
 .save-grades-button:hover {
     background-color:rgb(5, 168, 73);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 5px rgba(0, 144, 64, 0.3);
 }
 
 .save-grades-button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
 }
 
 /* Info Card Styles */
@@ -380,6 +386,7 @@
     border-radius: 8px;
     border: 1px solid #e0e0e0;
     overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .table-header {
@@ -397,6 +404,12 @@
         justify-content: space-between;
         align-items: center;
     }
+}
+
+.table-header-left {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
 }
 
 .table-header-right {
@@ -419,6 +432,45 @@
     font-weight: 600;
     color: #333;
     margin: 0;
+    margin-bottom: 0.5rem;
+}
+
+/* Subject Info Styles */
+#subject-name, #year-level, #adviser-info, #semester-info {
+    display: flex;
+    align-items: center;
+    font-weight: 500;
+    margin-bottom: 6px;
+    color: #333;
+    line-height: 1.5;
+}
+
+#subject-name i, #year-level i, #adviser-info i, #semester-info i {
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+    min-width: 1.2rem;
+    text-align: center;
+    color: #00b050;
+}
+
+/* Subject Card Styles */
+.subject-info .text-sm {
+    display: flex;
+    align-items: center;
+    line-height: 1.5;
+}
+
+.subject-info .text-sm .bx {
+    font-size: 1.1rem;
+    margin-right: 0.5rem;
+    color: #00b050;
+    min-width: 1.2rem;
+    text-align: center;
+}
+
+/* Update the existing style */
+#semester-info::before {
+    content: '';
 }
 
 .table-responsive {
@@ -450,21 +502,28 @@
 
 .student-table input {
     width: 80px;
-    padding: 4px 8px;
+    padding: 8px 12px;
     border: 1px solid #ddd;
     border-radius: 4px;
     text-align: center;
-    transition: border-color 0.2s ease;
+    transition: all 0.2s ease;
+    font-weight: 500;
+}
+
+.student-table input:focus {
+    border-color: #00b050;
+    box-shadow: 0 0 0 2px rgba(0, 176, 80, 0.2);
+    outline: none;
 }
 
 .student-table input.border-yellow-500 {
     border: 2px solid #f59e0b; /* Amber/yellow color */
-    background-color: #fef3c7; /* Light yellow background */
+    background-color: #fff7ed; /* Light yellow background */
 }
 
 .student-table input.border-red-500 {
     border: 2px solid #ef4444; /* Red color */
-    background-color: #fee2e2; /* Light red background */
+    background-color: #fef2f2; /* Light red background */
 }
 
 /* Status Badge Styles */
@@ -513,14 +572,23 @@
     background-color: white;
     font-size: 14px;
     color: #333;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.form-select:focus {
+    border-color: #00b050;
+    box-shadow: 0 0 0 2px rgba(0, 176, 80, 0.2);
+    outline: none;
 }
 
 @media (min-width: 768px) {
     .form-select {
         width: auto;
-        min-width: 150px;
+        min-width: 180px;
     }
 }
+
 .grade-input-container {
     position: relative;
     width: 100px;
@@ -534,20 +602,28 @@
     background: white;
     border: 1px solid #ddd;
     border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     display: none;
     z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
 }
 
 .grade-suggestion {
-    padding: 8px;
+    padding: 8px 12px;
     cursor: pointer;
     transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.grade-suggestion:last-child {
+    border-bottom: none;
 }
 
 .grade-suggestion:hover {
-    background-color: #f0f0f0;
+    background-color: #f0f9f4;
 }
+
 /* Add new styles for completed subjects */
 .subject-button.completed {
     background-color: #059669;
@@ -585,6 +661,7 @@
 /* Add these styles to your existing styles section */
 .subject-card {
     margin-bottom: 10px;
+    transition: all 0.3s ease;
 }
 
 .subject-info {
@@ -652,14 +729,14 @@
 /* Subject Card Styles */
 .subject-card {
     transition: all 0.2s ease-in-out;
-    background-color: #f0f9f4;
+    background-color: #f8fafc;
     border: 1px solid #e2e8f0;
     border-left: 4px solid #00b050;
 }
 
 .subject-card:hover {
     transform: translateY(-2px);
-    background-color: #e8f5ec;
+    background-color: #f0f9f4;
     border-color: #00b050;
     box-shadow: 0 4px 6px rgba(0, 176, 80, 0.1);
 }
@@ -780,36 +857,82 @@
     }
 }
 
-.table-header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
+/* Add animation effects */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
 }
 
-#semester-info {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-10px); }
+}
+
+.animate-fadeIn {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+.animate-fadeOut {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+/* Alert message styles */
+.alert-message {
+    margin-bottom: 16px;
+    border-radius: 6px;
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Badge styles for adviser indicator */
+.adviser-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background-color: #e0f2ff;
+    color: #0369a1;
+    border-radius: 9999px;
+    font-size: 0.75rem;
     font-weight: 500;
-}
-
-#semester-info::before {
-    content: '•';
-    color: #00b050;
+    margin-left: 0.5rem;
 }
 </style>
 
 <script>
+    /**
+ * Subject Grading Management
+ * Handles the functionality for subject teachers to input and manage grades
+ */
+
 // Global variables
 window.currentSubject = null;
 window.currentGrades = {};
 let isGradesConfirmed = false;
+let previousPeriodConfirmed = true;
+let isAdviser = false;
 
 document.addEventListener('DOMContentLoaded', () => {
     fetchSubjects();
+    
+    // Add event listener for period selector
+    const periodSelect = document.getElementById('period-select');
+    if (periodSelect) {
+        periodSelect.addEventListener('change', updatePeriodDisplay);
+    }
 });
 
+/**
+ * Fetch all subjects taught by the current teacher
+ */
 function fetchSubjects() {
+    // Show loading state
+    const subjectsList = document.getElementById('subjects-list');
+    if (subjectsList) {
+        subjectsList.innerHTML = `
+            <div class="col-span-3 flex justify-center items-center p-8">
+                <i class='bx bx-loader-alt bx-spin text-2xl text-green-600 mr-2'></i>
+                <span>Loading subjects...</span>
+            </div>`;
+    }
+    
     fetch('/subjects/by-year')
         .then(response => response.json())
         .then(data => {
@@ -825,6 +948,10 @@ function fetchSubjects() {
                     const semester = semesterInfo.toLowerCase().includes('1st sem') ? '1st Semester' : 
                                    semesterInfo.toLowerCase().includes('2nd sem') ? '2nd Semester' : '';
                     
+                    // Is this teacher the adviser for this class?
+                    const isAdviserBadge = subject.is_adviser ? 
+                        `<span class="ml-2 px-2 py-0.5 text-xs bg-blue-100 text-blue-800 rounded-full">Adviser</span>` : '';
+                    
                     return `
                     <div class="subject-card bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow ${subject.completed ? 'bg-green-50' : ''}">
                         <button
@@ -832,12 +959,13 @@ function fetchSubjects() {
                             class="subject-btn w-full text-left"
                             data-id="${subject.id}"
                             data-level-type="${subject.level_type}"
+                            data-is-adviser="${subject.is_adviser}"
                         >
                             <div class="subject-info">
-                                <h3 class="text-lg font-semibold text-gray-800">${subject.name}</h3>
-                                <div class="mt-2 space-y-1">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">${subject.name}${isAdviserBadge}</h3>
+                                <div class="space-y-2">
                                     <div class="text-sm text-gray-600">
-                                        <i class='bx bx-book-alt'></i>
+                                        <i class='bx bx-calendar-check'></i>
                                         ${displayNameParts[1] || ''} <!-- Year Level -->
                                     </div>
                                     <div class="text-sm text-gray-600">
@@ -870,10 +998,24 @@ function fetchSubjects() {
         })
         .catch(error => {
             console.error('Error fetching subjects:', error);
-            alert('Failed to fetch subjects. Please try again.');
+            
+            const subjectsList = document.getElementById('subjects-list');
+            if (subjectsList) {
+                subjectsList.innerHTML = `
+                    <div class="col-span-3 p-6 text-center bg-red-50 rounded-lg border border-red-200">
+                        <i class='bx bx-error-circle text-red-500 text-2xl mb-2'></i>
+                        <p class="text-red-600">Failed to fetch subjects. Please try again.</p>
+                        <button onclick="fetchSubjects()" class="mt-3 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+                            Retry
+                        </button>
+                    </div>`;
+            }
         });
 }
 
+/**
+ * Handle subject selection and load students for grading
+ */
 function selectSubject(subjectId, subjectName, levelType) {
     window.currentSubject = subjectId;
     window.currentLevelType = levelType;
@@ -884,16 +1026,42 @@ function selectSubject(subjectId, subjectName, levelType) {
         if (btn.dataset.id === subjectId.toString()) {
             btn.classList.add('selected');
             
+            // Store if the current teacher is the adviser
+            isAdviser = btn.dataset.isAdviser === 'true';
+            
+            // Extract subject information from the display name
+            const displayNameParts = subjectName.split(' - ');
+            const subjectNameElement = document.getElementById('subject-name');
+            const yearLevelElement = document.getElementById('year-level');
+            const adviserInfoElement = document.getElementById('adviser-info');
+            
+            // Set subject name (first part of display name)
+            if (subjectNameElement) {
+                subjectNameElement.innerHTML = `<i class='bx bx-book-open'></i> Subject: ${displayNameParts[0] || ''}`;
+                subjectNameElement.style.display = 'block';
+            }
+            
+            // Set section information
+            if (yearLevelElement) {
+                const section = displayNameParts[2] || '';
+                // Check for subclass info (like Humite)
+                const subclassInfo = displayNameParts[3] || '';
+                const subclassText = subclassInfo ? ` - ${subclassInfo}` : '';
+                yearLevelElement.innerHTML = `<i class='bx bx-group'></i> Section: ${section}${subclassText}`;
+                yearLevelElement.style.display = 'block';
+            } else {
+                yearLevelElement.style.display = 'none';
+            }
+            
             // Get and display semester information if it's a senior high class
             if (levelType === 'senior') {
-                const displayNameParts = subjectName.split(' - ');
                 const semesterMatch = displayNameParts.join(' ').match(/(1st|2nd)\s*sem/i);
                 
                 // Update semester info display
                 const semesterInfoElement = document.getElementById('semester-info');
                 if (semesterInfoElement && semesterMatch) {
                     const semester = semesterMatch[1].toLowerCase() === '1st' ? '1st Semester' : '2nd Semester';
-                    semesterInfoElement.textContent = semester;
+                    semesterInfoElement.innerHTML = `<i class='bx bx-calendar'></i> ${semester}`;
                     semesterInfoElement.style.display = 'block';
                 }
             } else {
@@ -912,37 +1080,39 @@ function selectSubject(subjectId, subjectName, levelType) {
     const studentsContainer = document.getElementById('students-container');
     studentsContainer.style.display = 'block';
 
-    document.getElementById('students-list').innerHTML = '';
+    document.getElementById('students-list').innerHTML = `
+        <tr>
+            <td colspan="4" class="text-center p-4">
+                <i class='bx bx-loader-alt bx-spin mr-2'></i> Loading students...
+            </td>
+        </tr>`;
+    
+    // Clear any previous warning or success messages
+    const existingMessages = document.querySelectorAll('.alert-message');
+    existingMessages.forEach(msg => msg.remove());
+    
     fetchStudents(subjectId);
 }
 
+/**
+ * Fetch students for a specific subject with their grades
+ */
 function fetchStudents(subjectId) {
     let currentPeriod = document.getElementById('period-select').value;
 
-    // Show loading indicator
-    const studentsList = document.getElementById('students-list');
-    studentsList.innerHTML = `<tr><td colspan="4" class="text-center p-4"><i class='bx bx-loader-alt bx-spin'></i> Loading students...</td></tr>`;
-
     console.log(`Fetching students for subject ${subjectId}, period ${currentPeriod}, level type ${window.currentLevelType}`);
 
-    // First check if grades are confirmed for this period
-    fetch(`/advisory-class/check-submission-status?period=${currentPeriod}&period_type=${window.currentLevelType === 'junior' ? 'quarter' : 'semester'}`)
-        .then(response => response.json())
-        .then(submissionStatus => {
-            // Set the global confirmation status
-            isGradesConfirmed = submissionStatus.submitted;
-            
-            // Proceed with fetching students
-            return fetch(`/subjects/${subjectId}/students`).then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.error || 'Failed to fetch students data');
-                    });
-                }
-                return response.json().then(data => ({ data, isConfirmed: submissionStatus.submitted }));
-            });
+    // Fetch students and their grades
+    fetch(`/subjects/${subjectId}/students?period=${currentPeriod}`)
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.error || 'Failed to fetch students data');
+                });
+            }
+            return response.json();
         })
-        .then(({ data, isConfirmed }) => {
+        .then(data => {
             console.log("API response:", data);
             
             if (!data) throw new Error('Subject data is empty');
@@ -950,13 +1120,101 @@ function fetchStudents(subjectId) {
                 throw new Error('Invalid student data received');
             }
             
+            // Set global variables based on API response
             window.currentLevelType = data.level_type || 'junior';
+            isGradesConfirmed = data.grades_confirmed || false;
+            previousPeriodConfirmed = data.previous_period_confirmed || false;
+            isAdviser = data.is_adviser || false;
+            
             console.log(`Updated level type from API: ${window.currentLevelType}`);
+            console.log(`Grades confirmed: ${isGradesConfirmed}`);
+            console.log(`Previous period confirmed: ${previousPeriodConfirmed}`);
+            console.log(`Is adviser: ${isAdviser}`);
+
+            // Display subject and section info if available
+            if (data.subject_name) {
+                const subjectNameElement = document.getElementById('subject-name');
+                if (subjectNameElement) {
+                    subjectNameElement.innerHTML = `<i class='bx bx-book-open'></i> Subject: ${data.subject_name}`;
+                    subjectNameElement.style.display = 'block';
+                }
+            } else {
+                // Get subject name from the selected subject element
+                const selectedSubject = document.querySelector('.subject-btn.selected');
+                if (selectedSubject) {
+                    const subjectText = selectedSubject.querySelector('.subject-info h3').textContent.trim();
+                    // Remove any badge text
+                    const subjectName = subjectText.replace(/Adviser/g, '').trim();
+                    
+                    const subjectNameElement = document.getElementById('subject-name');
+                    if (subjectNameElement && subjectName) {
+                        subjectNameElement.innerHTML = `<i class='bx bx-book-open'></i> Subject: ${subjectName}`;
+                        subjectNameElement.style.display = 'block';
+                    }
+                }
+            }
+            
+            if (data.year_level && data.section) {
+                const yearLevelElement = document.getElementById('year-level');
+                if (yearLevelElement) {
+                    const subclassInfo = data.subclass_info || '';
+                    const subclassText = subclassInfo ? ` - ${subclassInfo}` : '';
+                    yearLevelElement.innerHTML = `<i class='bx bx-group'></i> Section: ${data.section}${subclassText}`;
+                    yearLevelElement.style.display = 'block';
+                }
+            } else {
+                // Look for elements containing the year level and section information
+                const selectedSubject = document.querySelector('.subject-btn.selected');
+                if (selectedSubject) {
+                    // Look for elements containing the year level and section information
+                    const yearLevelEl = Array.from(selectedSubject.querySelectorAll('.text-sm')).find(el => 
+                        el.textContent.includes('Grade') || el.textContent.includes('Year Level'));
+                    
+                    const sectionEl = Array.from(selectedSubject.querySelectorAll('.text-sm')).find(el => 
+                        el.textContent.includes('Section'));
+                    
+                    // Try to find humite/subclass info from display name
+                    const displayName = selectedSubject.closest('.subject-btn').getAttribute('onclick') || '';
+                    const displayNameMatch = displayName.match(/'([^']+)'/);
+                    const displayNameParts = displayNameMatch ? displayNameMatch[1].split(' - ') : [];
+                    
+                    // Check for Humite or other subclass in the display name
+                    let subclassInfo = '';
+                    if (displayNameParts.length > 3) {
+                        subclassInfo = displayNameParts[3] || '';
+                    }
+                    
+                    let yearLevel = '';
+                    let section = '';
+                    
+                    if (yearLevelEl) {
+                        yearLevel = yearLevelEl.textContent.replace(/.*?:|\s*$/g, '').trim();
+                    }
+                    
+                    if (sectionEl) {
+                        section = sectionEl.textContent.replace(/Section:|\s*$/g, '').trim();
+                    }
+                    
+                    if (section) {
+                        const yearLevelElement = document.getElementById('year-level');
+                        if (yearLevelElement) {
+                            const subclassText = subclassInfo ? ` - ${subclassInfo}` : '';
+                            yearLevelElement.innerHTML = `<i class='bx bx-group'></i> Section: ${section}${subclassText}`;
+                            yearLevelElement.style.display = 'block';
+                        }
+                    } else {
+                        const yearLevelElement = document.getElementById('year-level');
+                        if (yearLevelElement) {
+                            yearLevelElement.style.display = 'none';
+                        }
+                    }
+                }
+            }
 
             // Display adviser info
             const adviserInfo = document.getElementById('adviser-info');
             if (data.adviser_name) {
-                adviserInfo.textContent = `Class Adviser: ${data.adviser_name}`;
+                adviserInfo.innerHTML = `<i class='bx bx-user'></i> Class Adviser: ${data.adviser_name}`;
                 adviserInfo.style.display = 'block';
             } else {
                 adviserInfo.style.display = 'none';
@@ -966,136 +1224,152 @@ function fetchStudents(subjectId) {
             const semesterInfoElement = document.getElementById('semester-info');
             if (window.currentLevelType === 'senior' && data.semester) {
                 const semesterText = data.semester === 1 ? '1st Semester' : '2nd Semester';
-                semesterInfoElement.textContent = semesterText;
+                semesterInfoElement.innerHTML = `<i class='bx bx-calendar'></i> ${semesterText}`;
                 semesterInfoElement.style.display = 'block';
             } else {
                 semesterInfoElement.style.display = 'none';
             }
 
-            const currentPeriodNum = parseInt(currentPeriod);
-            const periodType = window.currentLevelType === 'junior' ? 'quarter' : 'semester';
+            const studentsList = document.getElementById('students-list');
+            
+            // Clear any previous messages
+            const messageContainer = document.querySelector('.table-responsive');
+            const existingMessages = messageContainer.querySelectorAll('.alert-message');
+            existingMessages.forEach(msg => msg.remove());
+            
+            if (data.students.length === 0) {
+                studentsList.innerHTML = `<tr><td colspan="4" class="text-center p-4">No students found in this class</td></tr>`;
+                return;
+            }
 
-            // Check all previous periods' confirmation status
-            const checkPreviousPeriods = async () => {
-                let allPreviousPeriodsConfirmed = true;
-                let unconfirmedPeriod = null;
+            // Add warning messages based on grade status
+            if (isGradesConfirmed) {
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'alert-message bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 animate-fadeIn';
+                warningDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class='bx bx-lock-alt text-yellow-500 text-xl mr-2'></i>
+                        <div>
+                            <p class="font-bold">Grades Confirmed</p>
+                            <p>These grades have been confirmed by the adviser and can no longer be modified.</p>
+                        </div>
+                    </div>
+                `;
+                messageContainer.insertBefore(warningDiv, studentsList.parentElement);
+            } else if (!previousPeriodConfirmed && currentPeriod > 1) {
+                // Warning for unconfirmed previous period
+                const warningDiv = document.createElement('div');
+                warningDiv.className = 'alert-message bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4 animate-fadeIn';
+                warningDiv.innerHTML = `
+                    <div class="flex items-center">
+                        <i class='bx bx-error-circle text-yellow-500 text-xl mr-2'></i>
+                        <div>
+                            <p class="font-bold">Previous Period Not Confirmed</p>
+                            <p>${data.previous_period_message || 'Previous period grades must be confirmed by the adviser before you can enter grades for this period.'}</p>
+                        </div>
+                    </div>
+                `;
+                messageContainer.insertBefore(warningDiv, studentsList.parentElement);
+            }
 
-                // Check each previous period
-                for (let i = 1; i < currentPeriodNum; i++) {
-                    try {
-                        const response = await fetch(`/advisory-class/check-submission-status?period=${i}&period_type=${periodType}`);
-                        const status = await response.json();
-                        if (!status.submitted) {
-                            allPreviousPeriodsConfirmed = false;
-                            unconfirmedPeriod = i;
-                            break;
-                        }
-                    } catch (error) {
-                        console.error(`Error checking period ${i}:`, error);
-                        allPreviousPeriodsConfirmed = false;
-                        break;
-                    }
-                }
+            // Render the student list with grade inputs
+            studentsList.innerHTML = data.students.map(student => {
+                const periodType = window.currentLevelType === 'junior' ? 'quarter' : 'semester';
+                const periodGrade = student.grades[`${periodType}_${currentPeriod}`] || '';
+                const isDisabled = isGradesConfirmed || (!previousPeriodConfirmed && currentPeriod > 1);
+                const disabledReason = isGradesConfirmed ? 'Grades are confirmed' : 
+                                    (!previousPeriodConfirmed && currentPeriod > 1) ? `Previous ${periodType} not confirmed` : '';
 
-                return { allPreviousPeriodsConfirmed, unconfirmedPeriod };
-            };
-
-            checkPreviousPeriods().then(({ allPreviousPeriodsConfirmed, unconfirmedPeriod }) => {
-                if (data.students.length === 0) {
-                    studentsList.innerHTML = `<tr><td colspan="4" class="text-center p-4">No students found in this class</td></tr>`;
-                    return;
-                }
-
-                // Add warning message if grades are confirmed
-                if (isConfirmed) {
-                    const warningDiv = document.createElement('div');
-                    warningDiv.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4';
-                    warningDiv.innerHTML = `
-                        <p class="font-bold">Grades Confirmed</p>
-                        <p>These grades have been confirmed by the adviser and can no longer be modified.</p>
-                    `;
-                    studentsList.parentElement.insertBefore(warningDiv, studentsList);
-                } else if (!allPreviousPeriodsConfirmed && currentPeriodNum > 1) {
-                    // Add warning for unconfirmed previous periods
-                    const warningDiv = document.createElement('div');
-                    warningDiv.className = 'bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-4';
-                    warningDiv.innerHTML = `
-                    
-                    `;
-                    studentsList.parentElement.insertBefore(warningDiv, studentsList);
-                }
-
-                studentsList.innerHTML = data.students.map(student => {
-                    const periodGrade = student.grades[`${periodType}_${currentPeriod}`] || '';
-                    const isDisabled = isConfirmed || (!allPreviousPeriodsConfirmed && currentPeriodNum > 1);
-                    const disabledReason = isConfirmed ? 'Grades are confirmed' : 
-                                         (!allPreviousPeriodsConfirmed && currentPeriodNum > 1) ? `Previous ${periodType} not confirmed` : '';
-
-                    return `
-                        <tr>
-                            <td>${student.lrn}</td>
-                            <td>${student.name}</td>
-                            <td>
-                                <div class="grade-input-container">
-                                    <input
-                                        type="text"
-                                        class="grade-input ${isDisabled ? 'bg-gray-100' : ''}"
-                                        value="${periodGrade}"
-                                        ${isDisabled ? 'disabled' : ''}
-                                        data-student-id="${student.id}"
-                                        oninput="showGradeSuggestions(this)"
-                                        onkeydown="validateGradeInput(event)"
-                                        onfocus="showGradeSuggestions(this)"
-                                        onblur="hideSuggestions(this)"
-                                        onpaste="handleInputPaste(event)"
-                                        maxlength="3"
-                                        title="${isDisabled ? disabledReason : ''}"
-                                    >
-                                    <div class="grade-suggestions">
-                                        <!-- Dynamic options will appear here -->
-                                    </div>
+                return `
+                    <tr class="hover:bg-gray-50 transition-colors">
+                        <td class="border-b border-gray-200 p-3">${student.lrn}</td>
+                        <td class="border-b border-gray-200 p-3 font-medium">${student.name}</td>
+                        <td class="border-b border-gray-200 p-3">
+                            <div class="grade-input-container">
+                                <input
+                                    type="text"
+                                    class="grade-input ${isDisabled ? 'bg-gray-100 cursor-not-allowed' : ''}"
+                                    value="${periodGrade}"
+                                    ${isDisabled ? 'disabled' : ''}
+                                    data-student-id="${student.id}"
+                                    oninput="showGradeSuggestions(this)"
+                                    onkeydown="validateGradeInput(event)"
+                                    onfocus="showGradeSuggestions(this)"
+                                    onblur="hideSuggestions(this)"
+                                    onpaste="handleInputPaste(event)"
+                                    maxlength="3"
+                                    title="${isDisabled ? disabledReason : ''}"
+                                >
+                                <div class="grade-suggestions">
+                                    <!-- Dynamic options will appear here -->
                                 </div>
-                            </td>
-                            <td>
-                                <span class="grade-status-${student.id} status-badge ${getStatusClass(periodGrade)}">
-                                    ${isDisabled ? disabledReason : getStatus(periodGrade)}
-                                </span>
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+                            </div>
+                        </td>
+                        <td class="border-b border-gray-200 p-3">
+                            <span class="grade-status-${student.id} status-badge ${getStatusClass(periodGrade)}">
+                                ${isDisabled ? `<i class='bx bx-lock-alt mr-1'></i>${disabledReason}` : getStatus(periodGrade)}
+                            </span>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
 
-                // Disable save button if grades are confirmed or previous periods aren't confirmed
-                const saveButton = document.querySelector('.save-grades-button');
-                if (saveButton) {
-                    const shouldDisableButton = isConfirmed || (!allPreviousPeriodsConfirmed && currentPeriodNum > 1);
-                    saveButton.disabled = shouldDisableButton;
-                    saveButton.classList.toggle('opacity-50', shouldDisableButton);
-                    if (isConfirmed) {
-                        saveButton.title = 'Grades have been confirmed by the adviser';
-                    } else if (!allPreviousPeriodsConfirmed && currentPeriodNum > 1) {
-                        saveButton.title = `Previous ${periodType} must be confirmed first`;
-                    }
+            // Update the save grades button state
+            const saveButton = document.querySelector('.save-grades-button');
+            if (saveButton) {
+                const shouldDisableButton = isGradesConfirmed || (!previousPeriodConfirmed && currentPeriod > 1);
+                saveButton.disabled = shouldDisableButton;
+                saveButton.classList.toggle('opacity-50', shouldDisableButton);
+                if (isGradesConfirmed) {
+                    saveButton.title = 'Grades have been confirmed by the adviser';
+                } else if (!previousPeriodConfirmed && currentPeriod > 1) {
+                    saveButton.title = `Previous ${window.currentLevelType === 'junior' ? 'quarter' : 'semester'} must be confirmed first`;
+                } else {
+                    saveButton.title = '';
                 }
+            }
 
-                // Update current grades
-                window.currentGrades = {};
-                data.students.forEach(student => {
-                    const periodGrade = student.grades[`${periodType}_${currentPeriod}`];
-                    if (periodGrade !== null && periodGrade !== undefined) {
-                        window.currentGrades[student.id] = periodGrade;
-                    }
-                });
+            // Update current grades
+            window.currentGrades = {};
+            data.students.forEach(student => {
+                const periodType = window.currentLevelType === 'junior' ? 'quarter' : 'semester';
+                const periodGrade = student.grades[`${periodType}_${currentPeriod}`];
+                if (periodGrade !== null && periodGrade !== undefined) {
+                    window.currentGrades[student.id] = periodGrade;
+                }
             });
+            
+            // Add a fade-in animation to the table
+            studentsList.parentElement.classList.add('animate-fadeIn');
         })
         .catch(error => {
             console.error('Error fetching students:', error);
-            studentsList.innerHTML = `<tr><td colspan="4" class="text-center p-4 text-red-600">
-                <i class='bx bx-error-circle'></i> Error: ${error.message || 'Failed to fetch students. Please try again.'}
-            </td></tr>`;
+            
+            const studentsList = document.getElementById('students-list');
+            studentsList.innerHTML = `
+                <tr>
+                    <td colspan="4" class="text-center p-4 text-red-600">
+                        <i class='bx bx-error-circle mr-2'></i> 
+                        Error: ${error.message || 'Failed to fetch students. Please try again.'}
+                    </td>
+                </tr>`;
+            
+            // Add a retry button
+            const retryRow = document.createElement('tr');
+            retryRow.innerHTML = `
+                <td colspan="4" class="text-center p-4">
+                    <button onclick="fetchStudents(${subjectId})" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors">
+                        <i class='bx bx-refresh mr-1'></i> Retry
+                    </button>
+                </td>
+            `;
+            studentsList.appendChild(retryRow);
         });
 }
 
+/**
+ * Get ordinal suffix for numbers (1st, 2nd, 3rd, etc.)
+ */
 function getOrdinalSuffix(i) {
     const j = i % 10,
           k = i % 100;
@@ -1111,15 +1385,21 @@ function getOrdinalSuffix(i) {
     return "th";
 }
 
+/**
+ * Update display when period changes
+ */
 function updatePeriodDisplay() {
     if (window.currentSubject) {
         fetchStudents(window.currentSubject);
     }
 }
 
+/**
+ * Update a student's grade value
+ */
 function updateGrade(studentId, grade) {
     // If grades are confirmed, don't allow updates
-    if (isGradesConfirmed) {
+    if (isGradesConfirmed || (!previousPeriodConfirmed && document.getElementById('period-select').value > 1)) {
         return;
     }
 
@@ -1140,6 +1420,9 @@ function updateGrade(studentId, grade) {
     }
 }
 
+/**
+ * Get status text based on grade value
+ */
 function getStatus(grade) {
     if (grade === 'drp') return 'Dropped';
     if (grade === 'trf') return 'Transferred';
@@ -1148,118 +1431,125 @@ function getStatus(grade) {
     return 'Failed';
 }
 
+/**
+ * Get status CSS class based on grade value
+ */
 function getStatusClass(grade) {
-    if (grade === 'drp') return 'text-gray-600';
-    if (grade === 'trf') return 'text-gray-600';
-    if (!grade && grade !== 0) return 'text-gray-600';
-    if (grade >= 75) return 'text-gray-600';
-    return 'text-red-600'; // Keep red for failing grades only
+    if (grade === 'drp') return 'bg-gray-100 text-gray-600';
+    if (grade === 'trf') return 'bg-gray-100 text-gray-600';
+    if (!grade && grade !== 0) return 'bg-gray-100 text-gray-600';
+    if (grade >= 75) return 'bg-green-100 text-green-800';
+    return 'bg-red-100 text-red-600'; // Keep red for failing grades only
 }
 
+/**
+ * Save grades for the current subject and period
+ */
 function saveGrades() {
-    console.log("Save grades triggered. Current level type:", window.currentLevelType);
-    
     if (!window.currentSubject) {
         console.error('No subject selected');
         alert('Please select a subject first');
         return;
     }
 
+    // If grades are confirmed or previous period not confirmed, prevent saving
+    if (isGradesConfirmed || (!previousPeriodConfirmed && document.getElementById('period-select').value > 1)) {
+        return;
+    }
+
     const currentPeriod = document.getElementById('period-select').value;
     const periodType = window.currentLevelType === 'junior' ? 'quarter' : 'semester';
 
-    // First check if grades are confirmed
-    fetch(`/advisory-class/check-submission-status?period=${currentPeriod}&period_type=${periodType}`)
-        .then(response => response.json())
-        .then(submissionStatus => {
-            if (submissionStatus.submitted) {
-                alert('Cannot modify grades. These grades have been confirmed by the adviser.');
-                return Promise.reject('Grades are confirmed');
-            }
-
     const grades = [];
-            let hasSingleDigitGrade = false;
+    let hasSingleDigitGrade = false;
+    let hasEmptyGrades = false;
 
     // Get all grade inputs
     const gradeInputs = document.querySelectorAll('.grade-input');
+    
+    // Clear any warning styles first
+    gradeInputs.forEach(input => {
+        input.classList.remove('border-red-500', 'border-yellow-500');
+    });
 
     gradeInputs.forEach(input => {
-        if (input.value) {
-                    // Handle special values (drp/trf)
-                    if (['drp', 'trf'].includes(input.value.toLowerCase())) {
-                        grades.push({
-                            student_id: parseInt(input.dataset.studentId),
-                            grade: input.value.toLowerCase(),
-                            period: parseInt(currentPeriod),
-                            period_type: periodType
-                        });
-                        return;
-                    }
+        const studentId = parseInt(input.dataset.studentId);
+        
+        // Skip disabled inputs
+        if (input.disabled) return;
+        
+        if (!input.value.trim()) {
+            hasEmptyGrades = true;
+            input.classList.add('border-yellow-500');
+            return;
+        }
+        
+        // Handle special values (drp/trf)
+        if (['drp', 'trf'].includes(input.value.toLowerCase())) {
+            grades.push({
+                student_id: studentId,
+                grade: input.value.toLowerCase(),
+                period: parseInt(currentPeriod),
+                period_type: periodType
+            });
+            return;
+        }
 
-                    // Check if the input is a single digit for numeric grades
-                    if (input.value.length === 1) {
-                        hasSingleDigitGrade = true;
-                        input.classList.add('border-red-500');
-                    } else {
-                        input.classList.remove('border-red-500');
-                        // Ensure whole number grade
-                        const grade = Math.floor(parseFloat(input.value));
+        // Check if the input is a single digit for numeric grades
+        if (input.value.length === 1) {
+            hasSingleDigitGrade = true;
+            input.classList.add('border-red-500');
+        } else {
+            // Ensure whole number grade
+            const grade = Math.floor(parseFloat(input.value));
             if (!isNaN(grade)) {
-                            // Update input display to show whole number
-                            input.value = grade.toString();
+                // Update input display to show whole number
+                input.value = grade.toString();
                 grades.push({
-                    student_id: parseInt(input.dataset.studentId),
+                    student_id: studentId,
                     grade: grade,
                     period: parseInt(currentPeriod),
                     period_type: periodType
                 });
-                        }
             }
         }
     });
 
-            if (hasSingleDigitGrade) {
-                // Show error message
-                const studentsList = document.getElementById('students-list');
-                const errorMessage = document.createElement('div');
-                errorMessage.className = 'p-3 mb-3 bg-red-100 text-red-800 rounded';
-                errorMessage.innerHTML = `
-                    <i class="bx bx-error-circle"></i> Error: Cannot save incomplete grades. Please enter complete grades (70-100).
-                `;
-                studentsList.parentNode.insertBefore(errorMessage, studentsList);
-                
-                // Remove error message after 5 seconds
-                setTimeout(() => {
-                    errorMessage.remove();
-                }, 5000);
-                
-                return Promise.reject('Incomplete grades');
-            }
+    // Validate that all grades are complete
+    if (hasSingleDigitGrade) {
+        // Show error message
+        showMessage('error', 'Cannot save incomplete grades. Please enter complete grades (70-100).');
+        return;
+    }
+    
+    if (hasEmptyGrades) {
+        // Show warning message
+        showMessage('warning', 'Some students do not have grades. All students should have a grade before saving.');
+        return;
+    }
 
     if (grades.length === 0) {
-        alert('No grades to save');
-                return Promise.reject('No grades to save');
+        showMessage('warning', 'No grades to save. Please enter grades for students.');
+        return;
     }
 
     // Get the CSRF token
     const token = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
 
     // Disable the save button while saving
-            const saveButton = document.querySelector('.save-grades-button');
+    const saveButton = document.querySelector('.save-grades-button');
     if (saveButton) {
         saveButton.disabled = true;
-                saveButton.innerHTML = '<i class="bx bx-loader-alt bx-spin"></i> Saving...';
+        saveButton.innerHTML = '<i class="bx bx-loader-alt bx-spin mr-1"></i> Saving...';
     }
 
     // Create the request data
     const requestData = {
-                subject_id: window.currentSubject,
+        subject_id: window.currentSubject,
         grades: grades
     };
 
-            console.log("Saving grade data:", requestData);
-
-            return fetch('/subjects/update-grades', {
+    fetch('/subjects/update-grades', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
@@ -1267,12 +1557,11 @@ function saveGrades() {
             'Accept': 'application/json'
         },
         body: JSON.stringify(requestData)
-            });
     })
     .then(response => {
         if (!response.ok) {
-                return response.json().then(data => {
-                    throw new Error(data.error || 'Failed to save grades');
+            return response.json().then(data => {
+                throw new Error(data.error || 'Failed to save grades');
             });
         }
         return response.json();
@@ -1282,65 +1571,84 @@ function saveGrades() {
             throw new Error(data.error);
         }
 
-            // Show success message
-            const studentsList = document.getElementById('students-list');
-            const successMessage = document.createElement('div');
-            successMessage.className = 'p-3 mb-3 bg-green-100 text-green-800 rounded';
-            successMessage.innerHTML = '<i class="bx bx-check-circle"></i> Grades saved successfully!';
-            studentsList.parentNode.insertBefore(successMessage, studentsList);
-            
-            // Remove success message after 3 seconds
-            setTimeout(() => {
-                successMessage.remove();
-            }, 3000);
-
-        // Update UI to reflect saved state
-        if (data.completed) {
-                const subjectBtn = document.querySelector(`.subject-btn[data-id="${window.currentSubject}"]`);
-            if (subjectBtn) {
-                subjectBtn.classList.add('completed');
-            }
-        }
+        // Show success message
+        showMessage('success', 'Grades saved successfully!');
 
         // Refresh the students list to show updated statuses
-            fetchStudents(window.currentSubject);
+        fetchStudents(window.currentSubject);
     })
     .catch(error => {
-            if (error === 'Grades are confirmed' || error === 'Incomplete grades' || error === 'No grades to save') {
-                // These errors are already handled
-                return;
-            }
-
         console.error('Error saving grades:', error);
-            
-            // Show error message
-            const studentsList = document.getElementById('students-list');
-            const errorMessage = document.createElement('div');
-            errorMessage.className = 'p-3 mb-3 bg-red-100 text-red-800 rounded';
-            errorMessage.innerHTML = `<i class="bx bx-error-circle"></i> Error: ${error.message || 'Failed to save grades. Please try again.'}`;
-            studentsList.parentNode.insertBefore(errorMessage, studentsList);
-            
-            // Remove error message after 5 seconds
-            setTimeout(() => {
-                errorMessage.remove();
-            }, 5000);
+        
+        // Show error message
+        showMessage('error', error.message || 'Failed to save grades. Please try again.');
     })
     .finally(() => {
         // Re-enable the save button
-            const saveButton = document.querySelector('.save-grades-button');
+        const saveButton = document.querySelector('.save-grades-button');
         if (saveButton) {
             saveButton.disabled = false;
-                saveButton.innerHTML = 'Save Grades';
+            saveButton.innerHTML = 'Save Grades';
         }
     });
 }
 
+/**
+ * Show a message with specified type (success, error, warning, info)
+ */
+function showMessage(type, message) {
+    // Define message styles based on type
+    let styles = {
+        success: 'bg-green-100 border-green-500 text-green-800',
+        error: 'bg-red-100 border-red-500 text-red-800',
+        warning: 'bg-yellow-100 border-yellow-500 text-yellow-800',
+        info: 'bg-blue-100 border-blue-500 text-blue-800'
+    };
+    
+    // Define corresponding icons
+    let icons = {
+        success: 'bx-check-circle',
+        error: 'bx-error-circle',
+        warning: 'bx-error',
+        info: 'bx-info-circle'
+    };
+    
+    const studentsList = document.getElementById('students-list');
+    if (!studentsList) return;
+    
+    // Remove any existing messages with the same type
+    const existingMessages = document.querySelectorAll(`.alert-message.${type}`);
+    existingMessages.forEach(msg => msg.remove());
+    
+    const messageElement = document.createElement('div');
+    messageElement.className = `alert-message ${type} ${styles[type]} border-l-4 p-3 mb-3 rounded animate-fadeIn`;
+    messageElement.innerHTML = `
+        <div class="flex items-center">
+            <i class="bx ${icons[type]} mr-2 text-lg"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    // Insert message before the studentsList
+    studentsList.parentNode.insertBefore(messageElement, studentsList);
+    
+    // Auto remove the message after some time
+    let timeout = type === 'error' ? 8000 : 5000;
+    setTimeout(() => {
+        messageElement.classList.add('animate-fadeOut');
+        setTimeout(() => messageElement.remove(), 500);
+    }, timeout);
+}
+
+/**
+ * Update period selector based on level type and semester info
+ */
 function updatePeriodSelector(levelType) {
     console.log("Updating period selector for level type:", levelType);
     const periodSelect = document.getElementById('period-select');
     periodSelect.innerHTML = '';
 
-    // Get the class details from the selected subject's display name
+    // Get the class details from the selected subject
     const selectedSubject = document.querySelector('.subject-btn.selected');
     if (!selectedSubject) return;
 
@@ -1349,7 +1657,8 @@ function updatePeriodSelector(levelType) {
     const yearLevel = yearLevelMatch ? parseInt(yearLevelMatch[1]) : null;
 
     // Get semester information from the subject display
-    const semesterInfo = document.querySelector('.subject-btn.selected .text-sm');
+    const semesterInfo = Array.from(selectedSubject.querySelectorAll('.text-sm')).find(el => 
+        el.textContent.toLowerCase().includes('sem'));
     const semesterText = semesterInfo ? semesterInfo.textContent.toLowerCase() : '';
     const isSemesterOne = semesterText.includes('1st sem');
     const isSemesterTwo = semesterText.includes('2nd sem');
@@ -1386,9 +1695,12 @@ function updatePeriodSelector(levelType) {
     }
 }
 
+/**
+ * Show grade suggestions dropdown
+ */
 function showGradeSuggestions(input) {
-    // If grades are confirmed, prevent any modifications
-    if (isGradesConfirmed) {
+    // If grades are confirmed or previous period not confirmed, prevent modifications
+    if (isGradesConfirmed || (!previousPeriodConfirmed && document.getElementById('period-select').value > 1)) {
         input.blur();
         return;
     }
@@ -1397,14 +1709,14 @@ function showGradeSuggestions(input) {
     const studentId = input.dataset.studentId;
     
     // Clear any existing warning styles
-    input.classList.remove('border-yellow-500');
+    input.classList.remove('border-yellow-500', 'border-red-500');
     input.title = '';
     
     const container = input.parentElement;
     const suggestions = container.querySelector('.grade-suggestions');
     suggestions.innerHTML = '';
 
-    // Handle 'd' or 't' inputs
+    // Handle 'd' or 't' inputs for special statuses
     if (value === 'd') {
         const div = document.createElement('div');
         div.className = 'grade-suggestion';
@@ -1442,18 +1754,22 @@ function showGradeSuggestions(input) {
         }
     }
     
+    // When entering the first digit, show suggestions
     if (value.length === 1) {
         if (!['7', '8', '9', '1'].includes(value)) {
             input.value = '';
             input.title = 'First digit must be 7, 8, 9, or 1';
             return;
         }
+        
+        // Add warning style for incomplete grade
         input.classList.add('border-yellow-500');
         input.title = 'Please enter a complete grade (70-100)';
         
         const digit = parseInt(value);
         let options = [];
 
+        // Generate grade range options based on first digit
         if (digit === 7) options = range(70, 79);
         else if (digit === 8) options = range(80, 89);
         else if (digit === 9) options = range(90, 99);
@@ -1481,7 +1797,7 @@ function showGradeSuggestions(input) {
             separator.style.margin = '4px 0';
             suggestions.appendChild(separator);
 
-            // Add DRP and TRF at the bottom
+            // Add DRP and TRF special status options
             const specialOptions = [
                 { display: 'drp', value: 'drp' },
                 { display: 'trf', value: 'trf' }
@@ -1499,10 +1815,12 @@ function showGradeSuggestions(input) {
                 suggestions.appendChild(div);
             });
         }
-            suggestions.style.display = 'block';
-            return;
+        
+        suggestions.style.display = 'block';
+        return;
     }
 
+    // Validate and format complete grade values
     if (value) {
         const numValue = parseInt(value);
         if (numValue < 70 && value.length >= 2) {
@@ -1518,14 +1836,18 @@ function showGradeSuggestions(input) {
         }
     }
 
+    // Hide suggestions if not showing a single digit
     if (!value || value.length !== 1) {
-    suggestions.style.display = 'none';
+        suggestions.style.display = 'none';
     }
 }
 
+/**
+ * Validate grade input on keydown
+ */
 function validateGradeInput(e) {
-    // If grades are confirmed, prevent any input
-    if (isGradesConfirmed) {
+    // If grades are confirmed or previous period not confirmed, prevent input
+    if (isGradesConfirmed || (!previousPeriodConfirmed && document.getElementById('period-select').value > 1)) {
         e.preventDefault();
         return;
     }
@@ -1548,9 +1870,9 @@ function validateGradeInput(e) {
     
     // Block decimal point
     if (keyValue === '.') {
-            e.preventDefault();
-            return;
-        }
+        e.preventDefault();
+        return;
+    }
     
     // If the current value is drp or trf, prevent any additional input
     if (['drp', 'trf'].includes(currentValue)) {
@@ -1569,9 +1891,9 @@ function validateGradeInput(e) {
     if (currentValue.length === 0 || (selectionStart === 0 && input.selectionEnd === currentValue.length)) {
         // Only allow 7, 8, 9, 1, d, or t as first character
         if (!['7', '8', '9', '1', 'd', 't'].includes(keyValue)) {
-        e.preventDefault();
+            e.preventDefault();
             input.title = 'First character must be 7, 8, 9, 1, d, or t';
-        return;
+            return;
         }
     }
     
@@ -1583,8 +1905,8 @@ function validateGradeInput(e) {
     
     // Restrict input to 3 characters max
     if (currentValue.length >= 3 && selectionStart >= 3) {
-            e.preventDefault();
-            return;
+        e.preventDefault();
+        return;
     }
     
     // If it's a number, check the value
@@ -1593,16 +1915,19 @@ function validateGradeInput(e) {
         if (newValue.length >= 2) {
             const numValue = parseInt(newValue);
             if (numValue > 100) {
-            e.preventDefault();
-            return;
+                e.preventDefault();
+                return;
             }
         }
     }
 }
 
+/**
+ * Handle paste events for grade inputs
+ */
 function handleInputPaste(event) {
-    // If grades are confirmed, prevent paste
-    if (isGradesConfirmed) {
+    // If grades are confirmed or previous period not confirmed, prevent paste
+    if (isGradesConfirmed || (!previousPeriodConfirmed && document.getElementById('period-select').value > 1)) {
         event.preventDefault();
         return;
     }
@@ -1626,9 +1951,9 @@ function handleInputPaste(event) {
         if (value.length > 0) {
             const firstDigit = value[0];
             if (!['7', '8', '9', '1'].includes(firstDigit)) {
-            input.value = '';
+                input.value = '';
                 input.title = 'First digit must be 7, 8, 9, or 1';
-            return;
+                return;
             }
         }
         
@@ -1658,13 +1983,22 @@ function handleInputPaste(event) {
     }, 0);
 }
 
+/**
+ * Hide grade suggestions dropdown
+ */
 function hideSuggestions(input) {
     // Small delay to allow click events to register
     setTimeout(() => {
-        input.parentElement.querySelector('.grade-suggestions').style.display = 'none';
+        const suggestions = input.parentElement.querySelector('.grade-suggestions');
+        if (suggestions) {
+            suggestions.style.display = 'none';
+        }
     }, 200);
 }
 
+/**
+ * Generate number range array
+ */
 function range(start, end) {
     return Array.from({length: end - start + 1}, (_, i) => start + i);
 }

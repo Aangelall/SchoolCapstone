@@ -108,6 +108,10 @@ class SubjectController extends Controller
                 $subject->level_type = $subject->class->level_type;
                 $subject->adviser_name = $subject->class->adviser ? $subject->class->adviser->name : null;
                 $subject->teacher_name = $subject->teacher ? $subject->teacher->name : null;
+                
+                // Add a flag to indicate if the current teacher is the adviser
+                $subject->is_adviser = ($subject->class->adviser_id === Auth::id());
+                
                 unset($subject->class);
                 return $subject;
             });
@@ -121,41 +125,78 @@ class SubjectController extends Controller
             'subject_id' => 'required|exists:subjects,id',
             'grades' => 'required|array',
             'grades.*.student_id' => 'required|exists:users,id',
-            'grades.*.grade' => 'required|numeric|min:0|max:100',
+            'grades.*.grade' => 'required',
             'grades.*.period' => 'required|integer|min:1|max:4',
             'grades.*.period_type' => 'required|in:quarter,semester'
         ]);
-
+    
         try {
             DB::beginTransaction();
-
+    
             $subject = Subject::with(['teacher', 'class'])->findOrFail($request->subject_id);
-
-            // Verify the teacher owns this subject
+    
+            // Verify the teacher owns this subject (only check needed)
             if ($subject->teacher_id !== Auth::id()) {
                 throw new \Exception('Unauthorized access to subject');
             }
-
-            // Check if grades for this period are already confirmed
-            $periodConfirmed = Grade::where('subject_id', $request->subject_id)
-                ->where('period', $request->grades[0]['period'])
-                ->where('period_type', $request->grades[0]['period_type'])
+            
+            $currentPeriod = $request->grades[0]['period'] ?? 1;
+            $periodType = $request->grades[0]['period_type'] ?? 'quarter';
+            
+            // Check if grades are already confirmed for this period
+            $gradesConfirmed = Grade::where('subject_id', $subject->id)
+                ->where('period', $currentPeriod)
+                ->where('period_type', $periodType)
                 ->where('is_confirmed', true)
                 ->exists();
-
-            if ($periodConfirmed) {
-                throw new \Exception('Cannot modify grades. These grades have been confirmed by the adviser.');
+                
+            if ($gradesConfirmed) {
+                throw new \Exception('Grades for this period have already been confirmed by the adviser and cannot be modified');
             }
-
+            
+            // Check if previous period's grades are confirmed (if not first period)
+            if ($currentPeriod > 1) {
+                $previousPeriod = $currentPeriod - 1;
+                $previousGradesConfirmed = Grade::where('subject_id', $subject->id)
+                    ->where('period', $previousPeriod)
+                    ->where('period_type', $periodType)
+                    ->where('is_confirmed', true)
+                    ->exists();
+                    
+                if (!$previousGradesConfirmed) {
+                    throw new \Exception("Previous {$periodType} grades must be confirmed by the adviser first");
+                }
+            }
+    
             $teacherName = $subject->teacher ?
                 $subject->teacher->first_name . ' ' . $subject->teacher->last_name : 'N/A';
-
+    
             foreach ($request->grades as $gradeData) {
-                // Convert grade to integer using floor
-                $grade = is_numeric($gradeData['grade']) ? 
-                    floor($gradeData['grade']) : 
-                    $gradeData['grade']; // Keep original value for special cases like 'drp' or 'trf'
-
+                // Handle special grade values (drp, trf)
+                $grade = strtolower($gradeData['grade']);
+                if (in_array($grade, ['drp', 'trf'])) {
+                    Grade::updateOrCreate(
+                        [
+                            'student_id' => $gradeData['student_id'],
+                            'subject_id' => $request->subject_id,
+                            'period' => $gradeData['period'],
+                            'period_type' => $gradeData['period_type']
+                        ],
+                        [
+                            'grade' => $grade,
+                            'teacher_name' => $teacherName,
+                            'is_confirmed' => false, // Only advisory teachers can confirm
+                            'updated_at' => now()
+                        ]
+                    );
+                    continue;
+                }
+    
+                // Process numeric grades
+                $grade = floor($gradeData['grade']);
+                if ($grade < 70) $grade = 70;
+                if ($grade > 100) $grade = 100;
+    
                 Grade::updateOrCreate(
                     [
                         'student_id' => $gradeData['student_id'],
@@ -166,106 +207,22 @@ class SubjectController extends Controller
                     [
                         'grade' => $grade,
                         'teacher_name' => $teacherName,
+                        'is_confirmed' => false, // Only advisory teachers can confirm
                         'updated_at' => now()
                     ]
                 );
             }
-
+    
             DB::commit();
-
+    
             return response()->json([
                 'message' => 'Grades updated successfully'
             ]);
-
+    
         } catch (\Exception $e) {
             DB::rollback();
             return response()->json(['error' => $e->getMessage()], 403);
         }
-    }
-
-    /**
-     * Get subjects by group (grade level, strand, semester)
-     */
-    public function getByGroup(Request $request)
-    {
-        $validated = $request->validate([
-            'grade' => 'required|in:11,12',
-            'strand' => 'required|string',
-            'semester' => 'required|in:1,2'
-        ]);
-        
-        // First find the matching subject group
-        $subjectGroup = \App\Models\SubjectGroup::firstOrCreate([
-            'grade_level' => $validated['grade'],
-            'strand' => $validated['strand'],
-            'semester' => $validated['semester']
-        ]);
-        
-        // Get all subjects for this group
-        $subjects = $subjectGroup->subjects()->with('teacher')->get();
-        
-        return response()->json($subjects);
-    }
-
-    /**
-     * Save a subject to a subject group
-     */
-    public function saveToGroup(Request $request)
-    {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'grade_level' => 'required|integer|min:7|max:12',
-            'teacher_id' => 'nullable|exists:users,id',
-            'strand' => 'required_if:grade_level,11,12|string|max:255|nullable',
-            'semester' => 'required_if:grade_level,11,12|in:1,2|nullable',
-        ]);
-        
-        // Only create subject groups for senior high (grades 11-12)
-        if ($validated['grade_level'] >= 11) {
-            // First find or create the subject group
-            $subjectGroup = \App\Models\SubjectGroup::firstOrCreate([
-                'grade_level' => $validated['grade_level'],
-                'strand' => $validated['strand'],
-                'semester' => $validated['semester']
-            ]);
-            
-            // Check if the subject already exists in this group
-            $existingSubject = \App\Models\Subject::where('name', $validated['name'])
-                ->where('subject_group_id', $subjectGroup->id)
-                ->first();
-                
-            if ($existingSubject) {
-                // Update the existing subject's teacher if provided
-                if (isset($validated['teacher_id'])) {
-                    $existingSubject->teacher_id = $validated['teacher_id'];
-                    $existingSubject->save();
-                }
-                
-                return response()->json([
-                    'message' => 'Subject already exists in this group',
-                    'subject' => $existingSubject
-                ]);
-            }
-            
-            // Create the new subject in this group
-            $subject = new \App\Models\Subject([
-                'name' => $validated['name'],
-                'teacher_id' => $validated['teacher_id'] ?? null
-            ]);
-            
-            $subjectGroup->subjects()->save($subject);
-        } else {
-            // For junior high, create subject without a group
-            $subject = \App\Models\Subject::create([
-                'name' => $validated['name'],
-                'teacher_id' => $validated['teacher_id'] ?? null
-            ]);
-        }
-        
-        return response()->json([
-            'message' => 'Subject saved successfully',
-            'subject' => $subject->load('teacher')
-        ], 201);
     }
 
     /**
@@ -300,6 +257,24 @@ class SubjectController extends Controller
                 ->where('period_type', $periodType)
                 ->where('is_confirmed', true)
                 ->exists();
+                
+            // Check if previous period grades are confirmed (if not first period)
+            $previousPeriodConfirmed = true;
+            $previousPeriodMessage = '';
+            
+            if ($currentPeriod > 1) {
+                $previousPeriod = $currentPeriod - 1;
+                $previousPeriodConfirmed = Grade::where('subject_id', $subject->id)
+                    ->where('period', $previousPeriod)
+                    ->where('period_type', $periodType)
+                    ->where('is_confirmed', true)
+                    ->exists();
+                    
+                if (!$previousPeriodConfirmed) {
+                    $periodLabel = $periodType === 'quarter' ? 'Quarter' : 'Semester';
+                    $previousPeriodMessage = "Previous {$periodLabel} grades must be confirmed by the adviser first";
+                }
+            }
 
             $students = $subject->class->students->map(function($student) use ($subject, $levelType) {
                 // Get grades for this student in this subject
@@ -326,11 +301,34 @@ class SubjectController extends Controller
                 'students' => $students,
                 'adviser_name' => $subject->class->adviser ? $subject->class->adviser->name : null,
                 'section' => $subject->class->sectionDetails ? $subject->class->sectionDetails->name : $subject->class->section,
-                'grades_confirmed' => $gradesConfirmed
+                'grades_confirmed' => $gradesConfirmed,
+                'previous_period_confirmed' => $previousPeriodConfirmed,
+                'previous_period_message' => $previousPeriodMessage,
+                'is_adviser' => ($subject->class->adviser_id === Auth::id()),
+                'semester' => $subject->group->semester ?? null
             ];
 
             return response()->json($result);
 
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
+    }
+    
+    /**
+     * Check if the current teacher is the adviser for a specific subject
+     */
+    public function checkAdviserRole(Subject $subject)
+    {
+        try {
+            $teacher = Auth::user();
+            $subject->load('class');
+            
+            $isAdviser = ($subject->class->adviser_id === $teacher->id);
+            
+            return response()->json([
+                'is_adviser' => $isAdviser
+            ]);
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 500);
         }

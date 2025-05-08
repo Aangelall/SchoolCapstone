@@ -23,11 +23,11 @@
                     <span class="radio-custom"></span>
                     Junior High School
                 </label>
-                <label class="level-radio-label">
+                <!-- <label class="level-radio-label">
                     <input type="radio" name="level" value="senior" class="level-radio">
                     <span class="radio-custom"></span>
                     Senior High School
-                </label>
+                </label> -->
             </div>
         </div>
         

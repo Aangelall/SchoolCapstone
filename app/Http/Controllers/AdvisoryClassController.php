@@ -106,51 +106,47 @@ class AdvisoryClassController extends Controller
             $advisoryClass = Classes::with(['subjects.teacher', 'students'])
                 ->where('adviser_id', $teacher->id)
                 ->firstOrFail();
-
+    
             $period = $request->period;
             $periodType = $advisoryClass->level_type === 'junior' ? 'quarter' : 'semester';
-
+    
             // Get all subjects in this class
             $subjects = $advisoryClass->subjects;
             $allSubjectsComplete = true;
-
+    
             foreach ($subjects as $subject) {
                 $gradesCount = Grade::where('subject_id', $subject->id)
                     ->where('period', $period)
                     ->where('period_type', $periodType)
                     ->count();
-
+    
                 // If not all students have grades, throw an error
                 if ($gradesCount !== $advisoryClass->students->count()) {
                     $allSubjectsComplete = false;
                     break;
                 }
             }
-
+    
             if (!$allSubjectsComplete) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Not all subjects have complete grades for this period'
                 ], 400);
             }
-
+    
             // Mark all grades as confirmed for this period
             foreach ($subjects as $subject) {
                 Grade::where('subject_id', $subject->id)
                     ->where('period', $period)
                     ->where('period_type', $periodType)
                     ->update(['is_confirmed' => true]);
-
-                // Mark the subject as completed for this period
-                $subject->completed = true;
-                $subject->save();
             }
-
+    
             return response()->json([
                 'success' => true,
                 'message' => 'Grades confirmed successfully'
             ]);
-
+    
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -158,6 +154,7 @@ class AdvisoryClassController extends Controller
             ], 500);
         }
     }
+    
 
     public function getSubjectGradeStatus(Request $request)
     {
