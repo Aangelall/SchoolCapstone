@@ -13,7 +13,6 @@
             localStorage.setItem('sidebarOpen', value);
         });
 
-        // Close sidebar on small screens by default
         const checkWidth = () => {
             if (window.innerWidth <= 768) {
                 this.open = false;
@@ -21,10 +20,7 @@
             }
         };
 
-        // Check on init
         checkWidth();
-
-        // Check on resize
         window.addEventListener('resize', checkWidth);
     }
 }" :class="{ 'open': open }" class="sidebar">
@@ -51,6 +47,7 @@
             @endif
 
             @if(Auth::user()->role === 'student')
+                <!-- Student Navigation -->
                 <li>
                     <a href="{{ route('user.dashboard') }}"
                        @click="$nextTick(() => { localStorage.setItem('sidebarOpen', open) })"
@@ -70,7 +67,9 @@
                     </a>
                     <span class="tooltip" x-show="!open">My Grades</span>
                 </li>
+
             @elseif(Auth::user()->role === 'teacher')
+                <!-- Teacher Navigation -->
                 <li>
                     <a href="{{ route('user.dashboard') }}"
                        @click="$nextTick(() => { localStorage.setItem('sidebarOpen', open) })"
@@ -108,7 +107,9 @@
                     </a>
                     <span class="tooltip" x-show="!open">Achievers</span>
                 </li>
+
             @elseif(Auth::user()->role === 'admin')
+                <!-- Admin Navigation -->
                 <li>
                     <a href="{{ route('dashboard') }}"
                        @click="$nextTick(() => { localStorage.setItem('sidebarOpen', open) })"
@@ -150,7 +151,7 @@
                 <li>
                     <a href="{{ route('master.list') }}"
                        @click="$nextTick(() => { localStorage.setItem('sidebarOpen', open) })"
-                       class="{{ request()->routeIs('masterlist') ? 'active' : '' }}">
+                       class="{{ request()->routeIs('master.list') ? 'active' : '' }}">
                         <i class='bx bx-list-ul'></i>
                         <span class="links_name" x-cloak x-show="open">Master List</span>
                     </a>
@@ -170,6 +171,7 @@
         @endauth
     </ul>
 
+    <!-- Profile Section -->
     <div class="profile" :class="{ 'open': open }">
         <div class="profile-details">
             <div class="name_job">
@@ -202,7 +204,6 @@
 <nav class="top-navbar" :class="{ 'sidebar-open': open }">
     <div class="navbar-content">
         <div class="left-section">
-            <!-- Mobile menu button -->
             <button @click="open = !open"
                     class="mobile-menu-button"
                     type="button">
@@ -231,12 +232,10 @@
                      @click.away="show = false"
                      @keydown.escape.window="show = false"
                      class="user-dropdown">
-                    <!-- Add Profile link -->
                     <a href="{{ route('profile.edit') }}" class="dropdown-item">
                         <i class='bx bx-user'></i>
                         <span>Profile</span>
                     </a>
-                    <!-- Logout form -->
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
                         <button type="submit" class="dropdown-item text-red-600">
@@ -250,6 +249,7 @@
     </div>
 </nav>
 </div>
+
 <!-- Add Boxicons CSS -->
 <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
 

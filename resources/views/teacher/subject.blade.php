@@ -25,7 +25,11 @@
                     <div class="table-header">
                         <div class="table-header-left">
                             <h2>Student Grades</h2>
-                            <div id="adviser-info" class="text-sm mt-2 text-gray-700 font-medium"></div>
+                            <div class="subject-section-info mt-2">
+                                <div id="subject-info" class="text-sm text-gray-700 font-medium"></div>
+                                <div id="section-info" class="text-sm text-gray-700 font-medium"></div>
+                                <div id="adviser-info" class="text-sm text-gray-700 font-medium"></div>
+                            </div>
                             <div id="semester-info" class="text-sm mt-1 text-gray-600"></div>
                         </div>
                         <div class="table-header-right">
@@ -816,6 +820,12 @@
     gap: 0.25rem;
 }
 
+.subject-section-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
 #semester-info {
     display: flex;
     align-items: center;
@@ -865,6 +875,18 @@
     font-weight: 500;
     margin-left: 0.5rem;
 }
+
+/* New styles for subject and section info */
+#subject-info, #section-info, #adviser-info {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+
+
+
 </style>
 
 <script>
@@ -1019,6 +1041,20 @@ function selectSubject(subjectId, subjectName, levelType) {
                     semesterInfoElement.style.display = 'none';
                 }
             }
+
+            // Extract and set subject name
+            const subjectNameElement = document.getElementById('subject-info');
+            if (subjectNameElement) {
+                const nameparts = subjectName.split(' - ');
+                subjectNameElement.textContent = `Subject: ${nameparts[0] || 'N/A'}`;
+            }
+
+            // Extract and set section name
+            const sectionInfoElement = document.getElementById('section-info');
+            if (sectionInfoElement) {
+                const displayNameParts = subjectName.split(' - ');
+                sectionInfoElement.textContent = `Section: ${displayNameParts[2] || 'N/A'}`;
+            }
         }
     });
 
@@ -1078,6 +1114,18 @@ function fetchStudents(subjectId) {
             console.log(`Grades confirmed: ${isGradesConfirmed}`);
             console.log(`Previous period confirmed: ${previousPeriodConfirmed}`);
             console.log(`Is adviser: ${isAdviser}`);
+
+            // Display subject info
+            const subjectInfoElement = document.getElementById('subject-info');
+            if (subjectInfoElement) {
+                subjectInfoElement.textContent = `Subject: ${data.name || 'N/A'}`;
+            }
+
+            // Display section info
+            const sectionInfoElement = document.getElementById('section-info');
+            if (sectionInfoElement) {
+                sectionInfoElement.textContent = `Section: ${data.section || 'N/A'}`;
+            }
 
             // Display adviser info
             const adviserInfo = document.getElementById('adviser-info');

@@ -22,11 +22,11 @@ class UserController extends Controller
      */
     public function showTeachers()
     {
-        // Check if the authenticated user is an admin
+        // Only allow admin access
         if (Auth::user()->role !== 'admin') {
-            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
+            return redirect()->route('user.dashboard')->with('error', 'Unauthorized access.');
         }
-
+    
         $users = User::all();
         return view('admin.addteacher', compact('users'));
     }
@@ -296,19 +296,16 @@ public function checkLrnUnique(Request $request)
         'unique' => !$exists
     ]);
 }
-    /**
-     * Display a listing of the students.zz
-     */
-    public function showStudents()
-    {
-        // Check if the authenticated user is an admin
-        if (Auth::user()->role !== 'admin') {
-            return redirect()->route('dashboard')->with('error', 'Unauthorized access.');
-        }
-
-        $users = User::all();
-        return view('admin.addstudent', compact('users'));
+public function showStudents()
+{
+    // Only allow admin access
+    if (Auth::user()->role !== 'admin') {
+        return redirect()->route('user.dashboard')->with('error', 'Unauthorized access.');
     }
+
+    $users = User::all();
+    return view('admin.addstudent', compact('users'));
+}
 
     /**
      * Store a newly created user in storage.

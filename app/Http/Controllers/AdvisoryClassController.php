@@ -13,6 +13,10 @@ class AdvisoryClassController extends Controller
 {
     public function index(): View
     {
+        if (Auth::user()->role === 'student') {
+            return view('errors.access_denied', ['message' => 'Access denied.']);
+        }
+
         $teacher = Auth::user();
         
         // Debug the teacher
