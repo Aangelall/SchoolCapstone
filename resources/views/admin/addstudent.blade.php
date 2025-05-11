@@ -6,7 +6,7 @@
     <div class="header">
         <h1>Student Management</h1>
         <div class="button-group">
-            <button class="add-user-btn student-btn" onclick="openStudentModal()">+ Add Student</button>
+            <!-- <button class="add-user-btn student-btn" onclick="openStudentModal()">+ Add Student</button> -->
         </div>
     </div>
 
@@ -25,7 +25,7 @@
                     <th>Birthday</th>
                     <th>Role</th>
                     <th>Date Created</th>
-                    <th>Action</th>
+                    <!-- <th>Action</th> -->
                 </tr>
             </thead>
             <tbody>
@@ -54,8 +54,8 @@
                         <td>{{ $user->created_at->format('Y-m-d H:i:s') }}</td>
                         <td>
                             <div class="action-buttons">
-                                <button class="action-btn edit-btn" onclick="openEditStudentModal({{ $user->id }})" title="Edit">
-                                    <i class='bx bx-edit-alt'></i>
+                                <!-- <button class="action-btn edit-btn" onclick="openEditStudentModal({{ $user->id }})" title="Edit"> -->
+                                    <!-- <i class='bx bx-edit-alt'></i> -->
                                 </button>
                             </div>
                         </td>
@@ -144,11 +144,11 @@
                 <input type="date" id="edit-student-birthday" name="birthday" required>
             </div>
             <input type="hidden" name="role" value="student">
-            <div class="form-group">
+            <!-- <div class="form-group">
                 <label for="edit-student-password">Password (leave blank to keep current)</label>
                 <input type="password" id="edit-student-password" name="password">
                 <p class="text-sm text-gray-600">Default password is birthday in DDMMYYYY format</p>
-            </div>
+            </div> -->
             <div class="form-group">
                 <label for="edit-student-image">Profile Image</label>
                 <div class="image-upload-container">

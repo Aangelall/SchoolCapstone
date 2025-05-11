@@ -1635,28 +1635,34 @@ Jane,Smith,123456789013,2001-02-15</pre>
 
         // Add function to check for duplicate LRNs
         async function checkForDuplicateLRNs(csvFile) {
-            // Create FormData and append the file
-            const formData = new FormData();
-            formData.append('csv_file', csvFile);
-            formData.append('_token', '{{ csrf_token() }}');
-            
-            try {
-                const response = await fetch('/check-duplicate-lrns', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                if (!response.ok) {
-                    throw new Error(`Server responded with ${response.status}: ${await response.text()}`);
-                }
-                
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error checking for duplicate LRNs:', error);
-                return { duplicates: [], error: error.message };
+    try {
+        const formData = new FormData();
+        formData.append('csv_file', csvFile);
+        formData.append('_token', '{{ csrf_token() }}');
+        
+        const response = await fetch('/check-duplicate-lrns', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'Accept': 'application/json'
             }
+        });
+        
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Server response:', errorData);
+            throw new Error(errorData.message || 'Server error');
         }
+        
+        return await response.json();
+    } catch (error) {
+        console.error('Full error:', error);
+        return { 
+            error: error.message || 'Failed to check for duplicates. Please try again.',
+            details: error.response ? await error.response.json() : null
+        };
+    }
+}
         
         // Function to open duplicate LRN modal
         function showDuplicateLRNModal(duplicates) {

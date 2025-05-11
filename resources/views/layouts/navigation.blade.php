@@ -179,13 +179,20 @@
                 <div class="job" x-cloak x-show="open">{{ Auth::user()->role }}</div>
             </div>
         </div>
-        <form method="POST" action="{{ route('logout') }}" class="logout-form" x-cloak x-show="open">
+        <!-- <form method="POST" action="{{ route('logout') }}" class="logout-form" x-cloak x-show="open">
             @csrf
             <a href="{{ route('logout') }}"
                onclick="event.preventDefault(); this.closest('form').submit();">
                 <i class='bx bx-log-out' id="log_out"></i>
             </a>
-        </form>
+        </form> -->
+        <form method="POST" action="{{ route('logout') }}">
+    @csrf
+    <button type="submit" class="dropdown-item text-red-600">
+        <i class='bx bx-log-out'></i>
+        <span>Logout</span>
+    </button>
+</form>
         <div class="mobile-logout" x-show="!open">
             <form method="POST" action="{{ route('logout') }}">
                 @csrf

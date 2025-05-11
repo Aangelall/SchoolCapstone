@@ -88,6 +88,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     
     Route::get('/api/teacher/subjects', [TeacherDashboardController::class, 'getSubjects'])
         ->middleware(['auth', 'verified']);
+
+        Route::put('/password', [ProfileController::class, 'updatePassword'])->name('password.update');
     
     Route::get('/api/teacher/performance-data', [TeacherDashboardController::class, 'getPerformanceData'])
         ->middleware(['auth', 'verified']);
@@ -109,6 +111,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/strands-by-grade', [SectionSubjectController::class, 'getStrandsByGradeLevel']);
         Route::get('/sections/with-classes', [SectionSubjectController::class, 'getSectionsWithClasses']);
         Route::get('/check-section-used', [SectionSubjectController::class, 'checkSectionUsed']);
+
+        Route::post('/check-duplicate-lrns', [SectionSubjectController::class, 'checkDuplicateLRNs']);
 
         Route::get('/master-list', [MasterListController::class, 'index'])->name('master.list');
         Route::get('/student/{student}/grades', [MasterListController::class, 'getStudentGrades'])->name('student.grades.api');
@@ -162,7 +166,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/student-access/toggle', [StudentAccessController::class, 'toggleAll'])
         ->name('student-access.toggle');
 });
-
 // Public Routes
 Route::get('/', function () {
     return view('auth.login');
@@ -199,3 +202,5 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+require __DIR__.'/auth.php';

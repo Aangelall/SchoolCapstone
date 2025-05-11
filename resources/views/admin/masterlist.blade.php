@@ -1,11 +1,6 @@
 @extends('layouts.app')
 
-{{-- 
-IMPORTANT MANUAL CHANGES NEEDED:
-1. Remove the entire "School Year Selection" section (around line 92)
-2. In the JavaScript, remove the "updateSchoolYear" function (around line 902)
-3. Remove any references to schoolYear in the updateTable and updateActiveFilters functions
---}}
+
 
 @section('content')
 <div class="home-section">
@@ -35,11 +30,11 @@ IMPORTANT MANUAL CHANGES NEEDED:
                     <span class="radio-custom"></span>
                     Junior High School
                 </label>
-                <label class="level-radio-label">
+                <!-- <label class="level-radio-label">
                     <input type="radio" name="level" value="senior" class="level-radio">
                     <span class="radio-custom"></span>
                     Senior High School
-                </label>
+                </label> -->
             </div>
         </div>
         

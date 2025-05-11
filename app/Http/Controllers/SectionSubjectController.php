@@ -1502,7 +1502,225 @@ class SectionSubjectController extends Controller
             ], 500);
         }
     }
+
+/**
+ * Check for duplicate LRNs and validate CSV data
+ */
+/**
+ * Check for duplicate LRNs and validate CSV data
+ */
+public function checkDuplicateLRNs(Request $request)
+{
+    try {
+        $request->validate([
+            'csv_file' => 'required|file|mimes:csv,txt'
+        ]);
+
+        $file = $request->file('csv_file');
+        $csv = Reader::createFromPath($file->getRealPath());
+        $csv->setHeaderOffset(0);
+
+        // Try to determine delimiter automatically
+        $delimiter = $this->detectDelimiter($file->getRealPath());
+        $csv->setDelimiter($delimiter);
+
+        $headers = array_map('trim', array_map('strtolower', $csv->getHeader()));
+        $records = $csv->getRecords();
+        
+        $validationErrors = [];
+        $duplicates = [];
+        $csvLrns = [];
+        $lineNumber = 1; // Start at 1 to account for header row
+
+        foreach ($records as $record) {
+            $lineNumber++;
+            $rowErrors = [];
+            
+            // Normalize record keys to lowercase
+            $record = array_change_key_case($record, CASE_LOWER);
+            
+            // Map possible field names to standard names
+            $fieldMap = [
+                'first_name' => ['first name', 'first_name', 'firstname', 'given name', 'given_name'],
+                'last_name' => ['last name', 'last_name', 'lastname', 'surname', 'family name', 'family_name'],
+                'lrn' => ['lrn', 'learner reference number', 'learner_reference_number', 'student id', 'student_id'],
+                'birthdate' => ['birthday', 'birthdate', 'birth date', 'birth_date', 'date of birth', 'date_of_birth']
+            ];
+            
+            // Get actual values using field mapping
+            $firstName = $this->getMappedValue($record, $fieldMap['first_name']);
+            $lastName = $this->getMappedValue($record, $fieldMap['last_name']);
+            $lrn = $this->getMappedValue($record, $fieldMap['lrn']);
+            $birthdate = $this->getMappedValue($record, $fieldMap['birthdate']);
+
+            // Validate required fields
+            if (empty($firstName)) $rowErrors[] = "Missing first name";
+            if (empty($lastName)) $rowErrors[] = "Missing last name";
+            if (empty($lrn)) $rowErrors[] = "Missing LRN";
+            if (empty($birthdate)) $rowErrors[] = "Missing birthdate";
+
+            if (!empty($rowErrors)) {
+                $validationErrors["Line $lineNumber"] = $rowErrors;
+                continue;
+            }
+
+            // Validate LRN format
+            if (!preg_match('/^\d{12}$/', $lrn)) {
+                $rowErrors[] = "LRN must be exactly 12 digits";
+            } else {
+                // Track LRNs for duplicate checking
+                if (in_array($lrn, $csvLrns)) {
+                    $rowErrors[] = "Duplicate LRN in CSV";
+                } else {
+                    $csvLrns[] = $lrn;
+                }
+            }
+
+            // Validate birthdate
+            try {
+                $birthdateObj = $this->parseBirthdate($birthdate);
+                
+                if ($birthdateObj->isFuture()) {
+                    $rowErrors[] = "Birthdate cannot be in the future";
+                } elseif ($birthdateObj->year < 1900) {
+                    $rowErrors[] = "Birthdate is too old";
+                } elseif ($birthdateObj->age < 10) {
+                    $rowErrors[] = "Student must be at least 10 years old";
+                }
+            } catch (\Exception $e) {
+                $rowErrors[] = "Invalid birthdate format (use YYYY-MM-DD, MM/DD/YYYY, or similar)";
+            }
+
+            if (!empty($rowErrors)) {
+                $validationErrors["Line $lineNumber"] = $rowErrors;
+            }
+        }
+
+        // Check for duplicate LRNs in database
+        if (!empty($csvLrns)) {
+            $existingStudents = User::whereIn('lrn', $csvLrns)
+                ->where('role', 'student')
+                ->with(['classStudents.class' => function($query) {
+                    $query->select('id', 'year_level', 'section');
+                }])
+                ->get();
+
+            foreach ($existingStudents as $student) {
+                $currentClass = optional($student->classStudents->first())->class;
+                $duplicates[] = [
+                    'lrn' => $student->lrn,
+                    'name' => $student->name,
+                    'current_class' => $currentClass ? 
+                        "Grade {$currentClass->year_level} - {$currentClass->section}" : 
+                        'Not assigned'
+                ];
+            }
+        }
+
+        // Format error messages for display
+        $errorMessages = [];
+        foreach ($validationErrors as $line => $errors) {
+            $errorMessages[] = "Line $line: " . implode(', ', $errors);
+        }
+
+        if (!empty($errorMessages)) {
+            return response()->json([
+                'success' => false,
+                'message' => "The CSV file contains errors:\n" . implode("\n", $errorMessages),
+                'validation_errors' => $validationErrors,
+                'duplicates' => $duplicates
+            ], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'duplicates' => $duplicates,
+            'count' => count($duplicates),
+            'message' => count($duplicates) ? 
+                'Found existing students with matching LRNs' : 
+                'All data is valid and ready for import'
+        ]);
+
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error processing CSV: ' . $e->getMessage()
+        ], 500);
+    }
 }
 
+// Helper method to detect CSV delimiter
+private function detectDelimiter($filePath)
+{
+    $delimiters = [',', ';', "\t"];
+    $bestDelimiter = ',';
+    $bestCount = 0;
+    
+    $firstLine = file($filePath)[0];
+    
+    foreach ($delimiters as $delimiter) {
+        $count = substr_count($firstLine, $delimiter);
+        if ($count > $bestCount) {
+            $bestCount = $count;
+            $bestDelimiter = $delimiter;
+        }
+    }
+    
+    return $bestDelimiter;
+}
 
+// Helper method to get value by possible field names
+private function getMappedValue($record, $possibleFields)
+{
+    foreach ($possibleFields as $field) {
+        if (isset($record[$field])) {
+            return trim($record[$field]);
+        }
+    }
+    return null;
+}
 
+// Helper method to parse various date formats
+private function parseBirthdate($dateString)
+{
+    // Try common formats first
+    $formats = [
+        'Y-m-d', 'm/d/Y', 'd/m/Y', 'Y/m/d',
+        'd-m-Y', 'M d, Y', 'F d, Y',
+        'Y-n-j', 'n/j/Y', 'j/n/Y',
+        'm.d.Y', 'd.m.Y', 'Y.m.d'
+    ];
+    
+    foreach ($formats as $format) {
+        $date = \DateTime::createFromFormat($format, $dateString);
+        if ($date !== false) {
+            return \Carbon\Carbon::instance($date);
+        }
+    }
+    
+    // Try special case for "01-Jan-01" format
+    if (preg_match('/^(\d{1,2})-([A-Za-z]{3})-(\d{1,2})$/', $dateString, $matches)) {
+        $monthMap = [
+            'jan' => 1, 'feb' => 2, 'mar' => 3, 'apr' => 4, 
+            'may' => 5, 'jun' => 6, 'jul' => 7, 'aug' => 8, 
+            'sep' => 9, 'oct' => 10, 'nov' => 11, 'dec' => 12
+        ];
+        
+        $month = strtolower($matches[2]);
+        if (isset($monthMap[$month])) {
+            $day = $matches[1];
+            $year = $matches[3];
+            
+            // Handle 2-digit years
+            if (strlen($year) === 2) {
+                $year = ($year < 50) ? '20' . $year : '19' . $year;
+            }
+            
+            return \Carbon\Carbon::create($year, $monthMap[$month], $day);
+        }
+    }
+    
+    // Fallback to Carbon's parse
+    return \Carbon\Carbon::parse($dateString);
+}
+}
