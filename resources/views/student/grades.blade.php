@@ -37,7 +37,7 @@
                                 <h2 class="info-card-title text-blue-800">Class Information</h2>
                                 <div class="info-card-content">
                                     <p class="info-item">
-                                        <span class="info-label">School Year:</span>
+                                        <!-- <span class="info-label">School Year:</span> -->
                                         <span class="info-value text-blue-700">{{ $yearData['school_year'] }}</span>
                                     </p>
                                     <p class="info-item">

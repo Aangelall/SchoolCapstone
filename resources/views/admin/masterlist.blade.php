@@ -19,6 +19,9 @@
                 <i class='bx bx-search search-icon'></i>
                 <input type="text" class="search-input" placeholder="Search...">
             </div>
+                <button id="archive-btn" class="btn btn-secondary">
+        <i class='bx bx-archive'></i> View Archive
+    </button>
         </div>
 
         <!-- Level Selection Header -->
@@ -670,37 +673,24 @@
         color: #111827;
     }
 
-    /* Remove all color-specific grade classes */
-    /* .grade-outstanding {
-        background-color: #dcfce7;
-        color: #166534;
-    }
+    /* Status Badges */
+.badge {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    margin-left: 8px;
+}
 
-    .grade-very-good {
-        background-color: #dbeafe;
-        color: #1e40af;
-    }
+.complete-badge {
+    background-color: #dcfce7;
+    color: #166534;
+}
 
-    .grade-good {
-        background-color: #fef9c3;
-        color: #854d0e;
-    }
-
-    .grade-passed {
-        background-color: #f3f4f6;
-        color: #374151;
-    }
-
-    .grade-failed {
-        background-color: #fee2e2;
-        color: #991b1b;
-    }
-
-    .grade-pending {
-        background-color: #f3f4f6;
-        color: #6b7280;
-    } */
-
+.incomplete-badge {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
     /* Grade level section styles */
     .grade-level-section {
         margin-bottom: 30px;
@@ -721,6 +711,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Store current students data
     let currentStudents = [];
+    let isArchiveView = false; // Track if we're in archive view
 
     // Level Controls
     const levelRadios = document.querySelectorAll('.level-radio');
@@ -1009,31 +1000,16 @@ document.addEventListener('DOMContentLoaded', function() {
             filters.push(`Section: ${sectionText}`);
         }
 
+        // Add archive status filter
+        filters.push(`View: ${isArchiveView ? 'Complete Grades Only' : 'Incomplete Grades Only'}`);
+
         activeFiltersList.innerHTML = filters
             .map(filter => `<span class="filter-tag">${filter}</span>`)
             .join('');
     }
 
-    // Function to fetch grades for a student
-    async function fetchStudentGrades(studentId) {
-        try {
-            const response = await fetch(`/student/${studentId}/grades`);
-            if (!response.ok) throw new Error('Failed to fetch grades');
-            return await response.json();
-        } catch (error) {
-            console.error('Error fetching grades:', error);
-            return null;
-        }
-    }
-
-    function getGradeClass(grade) {
-        // Always return the same class regardless of grade value
-        return 'grade-cell';
-    }
-
     // Function to update table with students grouped by grade level
     function updateTableWithStudents(students) {
-        // If we have the students-list tbody, update it directly
         const studentsList = document.getElementById('students-list');
         if (studentsList) {
             // Clear existing content
@@ -1043,7 +1019,10 @@ document.addEventListener('DOMContentLoaded', function() {
             const isJuniorHigh = document.querySelector('.level-radio[value="junior"]').checked;
             
             if (students.length === 0) {
-                studentsList.innerHTML = `<tr><td colspan="9" class="text-center py-4">No students found</td></tr>`;
+                const message = isArchiveView
+                    ? 'No students with complete grades found'
+                    : 'All students have complete grades or no students found';
+                studentsList.innerHTML = `<tr><td colspan="9" class="text-center py-4">${message}</td></tr>`;
                 return;
             }
 
@@ -1079,14 +1058,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 // Format grades with styling
                 const formatGrade = (grade) => {
-                    return grade ? `<span class="grade-cell">${grade}</span>` : '-';
+                    if (!grade) return '<span class="grade-cell missing">-</span>';
+                    return `<span class="grade-cell ${grade < 75 ? 'failed' : ''}">${grade}</span>`;
                 };
+
+                // Add status badge
+                const statusBadge = student.hasCompleteGrades 
+                    ? '<span class="badge complete-badge">Complete</span>'
+                    : '<span class="badge incomplete-badge">Incomplete</span>';
 
                 // Add different columns based on school level
                 row.innerHTML = `
                     <td>${index + 1}</td>
                     <td>${student.lrn || '-'}</td>
-                    <td>${student.name || '-'}</td>
+                    <td>${student.name || '-'} ${statusBadge}</td>
                     <td>${student.section || '-'}</td>
                     ${isJuniorHigh ? `
                         <td class="text-center">${formatGrade(student.quarter1Grade)}</td>
@@ -1102,99 +1087,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 studentsList.appendChild(row);
             });
-
             return;
         }
-
-        // Original table with grade level grouping (if students-list not found)
-        const container = document.getElementById('students-by-grade-container');
-        // Determine the selected level (Junior/Senior) ONCE
-        const isJuniorHigh = document.querySelector('.level-radio[value="junior"]').checked;
-        
-        if (students.length === 0) {
-            container.innerHTML = `
-                <div class="no-students">
-                    <p>No students found</p>
-                </div>
-            `;
-            return;
-        }
-
-        // Group students by grade level
-        const studentsByGrade = {};
-        students.forEach(student => {
-            const gradeLevel = student.yearLevel || student.gradeLevel || 'Unknown Grade';
-            if (!studentsByGrade[gradeLevel]) {
-                studentsByGrade[gradeLevel] = [];
-            }
-            studentsByGrade[gradeLevel].push(student);
-        });
-
-        // Sort grade levels in order
-        const sortedGrades = Object.keys(studentsByGrade).sort((a, b) => {
-            const gradeOrder = {
-                'Grade 7': 1, 'Grade 8': 2, 'Grade 9': 3, 'Grade 10': 4,
-                'G11': 5, 'G12': 6
-            };
-            return (gradeOrder[a] || 99) - (gradeOrder[b] || 99);
-        });
-
-        // Generate HTML for each grade level
-        let html = '';
-        sortedGrades.forEach(grade => {
-            // Determine if this is Senior High (Grades 11-12)
-            // REMOVED: const isSeniorHigh = grade.includes('1') || grade.includes('2');
-            
-            html += `
-                <div class="grade-level-section">
-                    <div class="grade-level-header">${grade}</div>
-                    <table class="student-table">
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>LRN</th>
-                                <th>Student Name</th>
-                                <th>Section</th>
-                                ${!isJuniorHigh ? `
-                                    <th>Strand</th>
-                                    <th class="grade-column">1st Sem</th>
-                                    <th class="grade-column">2nd Sem</th>
-                                ` : `
-                                    <th class="grade-column">Q1</th>
-                                    <th class="grade-column">Q2</th>
-                                    <th class="grade-column">Q3</th>
-                                    <th class="grade-column">Q4</th>
-                                `}
-                                <th class="grade-column">Final</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            ${studentsByGrade[grade].map((student, index) => `
-                                <tr>
-                                    <td>${index + 1}</td>
-                                    <td>${student.lrn}</td>
-                                    <td>${student.name}</td>
-                                    <td>${student.section}</td>
-                                    ${!isJuniorHigh ? `
-                                        <td>${student.strand || '-'}</td>
-                                        <td class="grade-column">${student.firstSemGrade || '-'}</td>
-                                        <td class="grade-column">${student.secondSemGrade || '-'}</td>
-                                    ` : `
-                                        <td class="grade-column">${student.quarter1Grade || '-'}</td>
-                                        <td class="grade-column">${student.quarter2Grade || '-'}</td>
-                                        <td class="grade-column">${student.quarter3Grade || '-'}</td>
-                                        <td class="grade-column">${student.quarter4Grade || '-'}</td>
-                                    `}
-                                    <td class="grade-column">${student.finalGrade || '-'}</td>
-                                </tr>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-            `;
-        });
-
-        container.innerHTML = html;
     }
 
     // Function to update table
@@ -1219,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             currentStudents = data.students;
             
-            // Fetch grades for each student
+            // Fetch grades for each student and determine completion status
             for (let i = 0; i < currentStudents.length; i++) {
                 const student = currentStudents[i];
                 try {
@@ -1234,17 +1128,34 @@ document.addEventListener('DOMContentLoaded', function() {
                             student.quarter2Grade = gradesData.quarters?.q2 || null;
                             student.quarter3Grade = gradesData.quarters?.q3 || null;
                             student.quarter4Grade = gradesData.quarters?.q4 || null;
+                            
+                            // Determine if student has complete grades
+                            student.hasCompleteGrades = student.quarter1Grade !== null && 
+                                                      student.quarter2Grade !== null && 
+                                                      student.quarter3Grade !== null && 
+                                                      student.quarter4Grade !== null;
                         } else {
                             student.firstSemGrade = gradesData.semesters?.sem1 || null;
                             student.secondSemGrade = gradesData.semesters?.sem2 || null;
+                            
+                            // Determine if student has complete grades
+                            student.hasCompleteGrades = student.firstSemGrade !== null && 
+                                                       student.secondSemGrade !== null;
                         }
                     }
                 } catch (error) {
                     console.error(`Error fetching grades for student ${student.id}:`, error);
+                    student.hasCompleteGrades = false;
                 }
             }
             
-            updateTableWithStudents(currentStudents);
+            // Filter students based on archive view
+            const studentsToDisplay = isArchiveView 
+                ? currentStudents.filter(student => student.hasCompleteGrades) // Archive: only complete
+                : currentStudents.filter(student => !student.hasCompleteGrades); // Main: only incomplete
+                
+            updateTableWithStudents(studentsToDisplay);
+            updateActiveFilters();
 
         } catch (error) {
             console.error('Error:', error);
@@ -1265,7 +1176,34 @@ document.addEventListener('DOMContentLoaded', function() {
             (student.name && student.name.toLowerCase().includes(searchTerm)) ||
             (student.section && student.section.toLowerCase().includes(searchTerm))
         );
-        updateTableWithStudents(filteredStudents);
+        
+        // Apply archive filter to search results
+        const filteredResults = isArchiveView 
+            ? filteredStudents.filter(student => student.hasCompleteGrades)
+            : filteredStudents.filter(student => !student.hasCompleteGrades);
+            
+        updateTableWithStudents(filteredResults);
+    });
+
+    // Archive button functionality
+    const archiveBtn = document.getElementById('archive-btn');
+    archiveBtn.addEventListener('click', function() {
+        isArchiveView = !isArchiveView;
+        
+        // Update button appearance
+        if (isArchiveView) {
+            archiveBtn.classList.remove('btn-secondary');
+            archiveBtn.classList.add('btn-primary', 'active');
+            archiveBtn.innerHTML = '<i class="bx bx-list-ul"></i> View Incomplete';
+            document.getElementById('table-title').textContent = 'Archived Students (Complete Grades)';
+        } else {
+            archiveBtn.classList.remove('btn-primary', 'active');
+            archiveBtn.classList.add('btn-secondary');
+            archiveBtn.innerHTML = '<i class="bx bx-archive"></i> View Complete';
+            document.getElementById('table-title').textContent = 'Students with Incomplete Grades';
+        }
+        
+        updateTable();
     });
 
     // Initial setup

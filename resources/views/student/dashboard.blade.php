@@ -32,7 +32,7 @@
                     </div>
                 </div>
 
-                <!-- Account Info -->
+                <!-- Account Info
                 <div class="info-card bg-green-50">
                     <h2 class="info-card-title text-green-800">Account Details</h2>
                     <div class="info-card-content">
@@ -40,7 +40,7 @@
                             <span class="info-label">Status:</span>
                             <span class="info-value text-green-700">Active</span>
                         </p>
-                    </div>
+                    </div> -->
                 </div>
             </div>
         </div>

@@ -410,10 +410,7 @@ function fetchAdvisoryClassInfo() {
             
             if (data.advisoryClass) {
                 advisoryClassInfo.innerHTML = `
-                    <p class="info-item">
-                        <span class="info-label">Class:</span>
-                        <span class="info-value text-green-700">${data.advisoryClass.name}</span>
-                    </p>
+
                     <p class="info-item">
                         <span class="info-label">Students:</span>
                         <span class="info-value text-green-700">${data.advisoryClass.student_count}</span>
